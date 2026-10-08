@@ -39,12 +39,12 @@ description: "Завдання для створення узгоджених UM
 
 ### Реалізація історії користувача 1
 
-- [ ] T001 [P] [US1] Створити `docs/usecase.puml` у форматі PlantUML з акторами «Клієнт» і «Оператор» та сценаріями подання заявки на зворотний дзвінок і обробки дзвінка за сценарієм розмови.
-- [ ] T002 [P] [US1] Створити `docs/class.mmd` у форматі Mermaid з `CallCenterParticipant`, `Client`, `Operator`, `ConversationScript`, `StandardConversationScript`, `Call`, `TelephonyService` і `CallRecording`; показати узагальнення, реалізацію інтерфейсу, залежність `Call` від `TelephonyService`, композицію з `CallRecording`, конструктори, атрибути й методи класів, `final`-метод, перевизначення та перевантаження `Client.requestCallback(...)`.
-- [ ] T003 [P] [US1] Створити `docs/sequence.mmd` у форматі Mermaid з успішною взаємодією клієнта, оператора, `Call`, `TelephonyService` і сценарію розмови від подання заявки до створення та збереження `CallRecording`.
-- [ ] T004 [P] [US1] Створити `docs/state.mmd` у форматі Mermaid з початковим станом і переходами `NewRequest` → `CallInProgress` → `Recorded`; не позначати незавершений дзвінок або відсутній запис як успішний перехід.
-- [ ] T005 [P] [US1] Створити `docs/crc.xlsx` з окремою CRC-карткою для кожного з семи класів `CallCenterParticipant`, `Client`, `Operator`, `StandardConversationScript`, `Call`, `TelephonyService` і `CallRecording`; для кожної картки додати назву класу, точні заголовки колонок «обов'язки класу» та «з ким співпрацює», обов’язки й класи-співробітники.
-- [ ] T006 [US1] Звірити артефакти P1 між `docs/usecase.puml`, `docs/class.mmd`, `docs/sequence.mmd`, `docs/state.mmd` і `docs/crc.xlsx` за назвами учасників, класів, операцій та успішним переходом до `Recorded`.
+- [X] T001 [P] [US1] Створити `docs/usecase.puml` у форматі PlantUML з акторами «Клієнт» і «Оператор» та сценаріями подання заявки на зворотний дзвінок і обробки дзвінка за сценарієм розмови.
+- [X] T002 [P] [US1] Створити `docs/class.mmd` у форматі Mermaid з `CallCenterParticipant`, `Client`, `Operator`, `ConversationScript`, `StandardConversationScript`, `Call`, `TelephonyService` і `CallRecording`; показати узагальнення, реалізацію інтерфейсу, залежність `Call` від `TelephonyService`, композицію з `CallRecording`, конструктори, атрибути й методи класів, `final`-метод, перевизначення та перевантаження `Client.requestCallback(...)`.
+- [X] T003 [P] [US1] Створити `docs/sequence.mmd` у форматі Mermaid з успішною взаємодією клієнта, оператора, `Call`, `TelephonyService` і сценарію розмови від подання заявки до створення та збереження `CallRecording`.
+- [X] T004 [P] [US1] Створити `docs/state.mmd` у форматі Mermaid з початковим станом і переходами `NewRequest` → `CallInProgress` → `Recorded`; не позначати незавершений дзвінок або відсутній запис як успішний перехід.
+- [X] T005 [P] [US1] Створити `docs/crc.xlsx` з окремою CRC-карткою для кожного з семи класів `CallCenterParticipant`, `Client`, `Operator`, `StandardConversationScript`, `Call`, `TelephonyService` і `CallRecording`; для кожної картки додати назву класу, точні заголовки колонок «обов'язки класу» та «з ким співпрацює», обов’язки й класи-співробітники.
+- [X] T006 [US1] Звірити артефакти P1 між `docs/usecase.puml`, `docs/class.mmd`, `docs/sequence.mmd`, `docs/state.mmd` і `docs/crc.xlsx` за назвами учасників, класів, операцій та успішним переходом до `Recorded`.
 
 ## Phase 4: Історія користувача 2 — Оцінювання якості розмови (P2)
 
@@ -54,12 +54,12 @@ description: "Завдання для створення узгоджених UM
 
 ### Реалізація історії користувача 2
 
-- [ ] T007 [P] [US2] Оновити `docs/usecase.puml`: додати актора «Супервізор» та варіант використання прослуховування запису й оцінювання якості; зберегти сценарії P1.
-- [ ] T008 [P] [US2] Оновити `docs/class.mmd`: додати `Supervisor` і `QualityEvaluation` з атрибутами, методами та конструкторами; показати успадкування `Supervisor` від `CallCenterParticipant`, доступ до `CallRecording` і зв’язок оцінки з відповідним `Call`.
-- [ ] T009 [P] [US2] Оновити `docs/sequence.mmd`: продовжити сценарій після запису взаємодією супервізора з `CallRecording` і створенням та збереженням `QualityEvaluation`; відобразити, що без доступного запису оцінювання не завершується.
-- [ ] T010 [P] [US2] Оновити `docs/state.mmd`: додати перехід `Recorded` → `QualityEvaluated`, який виконується лише після успішного оцінювання запису.
-- [ ] T011 [P] [US2] Доповнити `docs/crc.xlsx` картками класів `Supervisor` і `QualityEvaluation` з назвою кожного класу, точними заголовками колонок «обов'язки класу» та «з ким співпрацює», обов’язками й класами-співробітниками; зберегти всі картки P1.
-- [ ] T012 [US2] Звірити сценарій оцінювання між `docs/usecase.puml`, `docs/class.mmd`, `docs/sequence.mmd`, `docs/state.mmd` і `docs/crc.xlsx`; підтвердити, що перехід у `QualityEvaluated` не відбувається без запису та завершеної оцінки.
+- [X] T007 [P] [US2] Оновити `docs/usecase.puml`: додати актора «Супервізор» та варіант використання прослуховування запису й оцінювання якості; зберегти сценарії P1.
+- [X] T008 [P] [US2] Оновити `docs/class.mmd`: додати `Supervisor` і `QualityEvaluation` з атрибутами, методами та конструкторами; показати успадкування `Supervisor` від `CallCenterParticipant`, доступ до `CallRecording` і зв’язок оцінки з відповідним `Call`.
+- [X] T009 [P] [US2] Оновити `docs/sequence.mmd`: продовжити сценарій після запису взаємодією супервізора з `CallRecording` і створенням та збереженням `QualityEvaluation`; відобразити, що без доступного запису оцінювання не завершується.
+- [X] T010 [P] [US2] Оновити `docs/state.mmd`: додати перехід `Recorded` → `QualityEvaluated`, який виконується лише після успішного оцінювання запису.
+- [X] T011 [P] [US2] Доповнити `docs/crc.xlsx` картками класів `Supervisor` і `QualityEvaluation` з назвою кожного класу, точними заголовками колонок «обов'язки класу» та «з ким співпрацює», обов’язками й класами-співробітниками; зберегти всі картки P1.
+- [X] T012 [US2] Звірити сценарій оцінювання між `docs/usecase.puml`, `docs/class.mmd`, `docs/sequence.mmd`, `docs/state.mmd` і `docs/crc.xlsx`; підтвердити, що перехід у `QualityEvaluated` не відбувається без запису та завершеної оцінки.
 
 ## Phase 5: Історія користувача 3 — Надсилання підсумку клієнту (P3)
 
@@ -69,12 +69,12 @@ description: "Завдання для створення узгоджених UM
 
 ### Реалізація історії користувача 3
 
-- [ ] T013 [P] [US3] Оновити `docs/usecase.puml`: додати сценарій отримання клієнтом підсумку електронною поштою після обробки дзвінка; зберегти сценарії P1 і P2.
-- [ ] T014 [P] [US3] Оновити `docs/class.mmd`: додати `ConversationSummary` і `EmailService` з атрибутами, методами та конструкторами; показати зв’язок підсумку з `Call` і симульовану доставку клієнту через `EmailService`.
-- [ ] T015 [P] [US3] Оновити `docs/sequence.mmd`: додати підготовку `ConversationSummary` та симульоване надсилання клієнту через поштову службу після оцінювання; не показувати непідтверджене надсилання як успішне.
-- [ ] T016 [P] [US3] Оновити `docs/state.mmd`: додати перехід `QualityEvaluated` → `SummarySent` та кінцевий стан; не переводити процес у `SummarySent`, якщо підсумок відсутній або надсилання не підтверджене.
-- [ ] T017 [P] [US3] Доповнити `docs/crc.xlsx` картками класів `ConversationSummary` і `EmailService` з назвою кожного класу, точними заголовками колонок «обов'язки класу» та «з ким співпрацює», обов’язками й класами-співробітниками; зберегти всі попередні картки.
-- [ ] T018 [US3] Звірити наскрізний сценарій між `docs/usecase.puml`, `docs/class.mmd`, `docs/sequence.mmd`, `docs/state.mmd` і `docs/crc.xlsx`; підтвердити порядок `NewRequest` → `CallInProgress` → `Recorded` → `QualityEvaluated` → `SummarySent` і покриття всіх 11 класів CRC-картками.
+- [X] T013 [P] [US3] Оновити `docs/usecase.puml`: додати сценарій отримання клієнтом підсумку електронною поштою після обробки дзвінка; зберегти сценарії P1 і P2.
+- [X] T014 [P] [US3] Оновити `docs/class.mmd`: додати `ConversationSummary` і `EmailService` з атрибутами, методами та конструкторами; показати зв’язок підсумку з `Call` і симульовану доставку клієнту через `EmailService`.
+- [X] T015 [P] [US3] Оновити `docs/sequence.mmd`: додати підготовку `ConversationSummary` та симульоване надсилання клієнту через поштову службу після оцінювання; не показувати непідтверджене надсилання як успішне.
+- [X] T016 [P] [US3] Оновити `docs/state.mmd`: додати перехід `QualityEvaluated` → `SummarySent` та кінцевий стан; не переводити процес у `SummarySent`, якщо підсумок відсутній або надсилання не підтверджене.
+- [X] T017 [P] [US3] Доповнити `docs/crc.xlsx` картками класів `ConversationSummary` і `EmailService` з назвою кожного класу, точними заголовками колонок «обов'язки класу» та «з ким співпрацює», обов’язками й класами-співробітниками; зберегти всі попередні картки.
+- [X] T018 [US3] Звірити наскрізний сценарій між `docs/usecase.puml`, `docs/class.mmd`, `docs/sequence.mmd`, `docs/state.mmd` і `docs/crc.xlsx`; підтвердити порядок `NewRequest` → `CallInProgress` → `Recorded` → `QualityEvaluated` → `SummarySent` і покриття всіх 11 класів CRC-картками.
 
 ## Phase 6: Завершення та наскрізна перевірка
 

@@ -1,0 +1,112 @@
+classDiagram
+    direction LR
+
+    class CallCenterParticipant {
+        <<abstract>>
+        #String participantId
+        #String displayName
+        +CallCenterParticipant(participantId: String, displayName: String)
+        +getParticipantId() String
+        +getDisplayName() String
+    }
+    class Client {
+        -String email
+        -String phoneNumber
+        +Client(participantId: String, displayName: String, email: String, phoneNumber: String)
+        +getDisplayName() String
+        +requestCallback() Call
+        +requestCallback(preferredTime: String) Call
+        +receiveSummary(summary: ConversationSummary) void
+    }
+    class Operator {
+        -String operatorStatus
+        +Operator(participantId: String, displayName: String, operatorStatus: String)
+        +getDisplayName() String
+        +handleCall(call: Call, script: ConversationScript) void
+    }
+    class Supervisor {
+        -String supervisorCode
+        +Supervisor(participantId: String, displayName: String, supervisorCode: String)
+        +getDisplayName() String
+        +evaluate(recording: CallRecording, call: Call) QualityEvaluation
+    }
+    class ConversationScript {
+        <<interface>>
+        +executeStep(stepNumber: int) String
+        +getStepCount() int
+    }
+    class StandardConversationScript {
+        -String scriptName
+        -List~String~ steps
+        +StandardConversationScript(scriptName: String, steps: List~String~)
+        +executeStep(stepNumber: int) String
+        +getStepCount() int
+    }
+    class Call {
+        -String callId
+        -String state
+        -TelephonyService telephonyService
+        -CallRecording recording
+        -QualityEvaluation qualityEvaluation
+        -ConversationSummary summary
+        +Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService)
+        +start() boolean
+        +completeAndRecord() CallRecording
+        +saveEvaluation(evaluation: QualityEvaluation) void
+        +saveSummary(summary: ConversationSummary) void
+    }
+    class TelephonyService {
+        -String serviceName
+        +TelephonyService(serviceName: String)
+        +startCall(callId: String) boolean
+        +endCall(callId: String) boolean
+    }
+    class CallRecording {
+        -String recordingId
+        -int duration
+        -DateTime createdAt
+        +CallRecording(recordingId: String, duration: int, createdAt: DateTime)
+        +listen() String
+    }
+    class QualityEvaluation {
+        -String evaluationId
+        -int score
+        -String feedback
+        +QualityEvaluation(evaluationId: String, score: int, feedback: String)
+        +getResult() String
+    }
+    class ConversationSummary {
+        -String summaryId
+        -String content
+        -DateTime preparedAt
+        +ConversationSummary(summaryId: String, content: String, preparedAt: DateTime)
+        +getContent() String
+    }
+    class EmailService {
+        -String serviceName
+        +EmailService(serviceName: String)
+        +sendSummary(client: Client, summary: ConversationSummary) boolean
+    }
+
+    CallCenterParticipant <|-- Client
+    CallCenterParticipant <|-- Operator
+    CallCenterParticipant <|-- Supervisor
+    ConversationScript <|.. StandardConversationScript
+    Operator ..> ConversationScript : uses
+    Call ..> TelephonyService : injected instance
+    Call *-- "0..1" CallRecording : owns
+    Call "1" --> "0..1" QualityEvaluation : stores
+    Call "1" --> "0..1" ConversationSummary : stores
+    Client "1" --> "0..*" Call : requests
+    Operator "1" --> "0..*" Call : handles
+    Supervisor ..> CallRecording : listens to
+    Supervisor ..> QualityEvaluation : creates
+    EmailService ..> Client : delivers to
+    EmailService ..> ConversationSummary : sends
+
+    note for CallCenterParticipant "getParticipantId() є final"
+    note for Client "getDisplayName() перевизначено; requestCallback() перевантажено для двох сигнатур"
+    note for Operator "getDisplayName() перевизначено"
+    note for Supervisor "getDisplayName() перевизначено"
+    note for TelephonyService "Симуляція телефонії; зовнішніх викликів немає"
+    note for EmailService "Симуляція електронної пошти; успіх лише після підтвердження"

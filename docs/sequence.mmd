@@ -1,0 +1,56 @@
+sequenceDiagram
+    autonumber
+    actor Client as Клієнт
+    participant Call
+    participant Operator as Оператор
+    participant TelephonyService
+    participant StandardConversationScript as ConversationScript
+    participant CallRecording
+    participant Supervisor as Супервізор
+    participant QualityEvaluation
+    participant ConversationSummary
+    participant EmailService
+
+    Client->>Call: requestCallback(бажаний час)
+    Call->>Operator: перевірити доступність і призначити дзвінок
+    alt Оператор доступний
+        Operator-->>Call: підтвердити призначення
+        Call->>TelephonyService: startCall(callId) — симуляція
+        TelephonyService-->>Call: дзвінок розпочато
+        Call->>Operator: розпочати обробку
+        loop Для кожного кроку сценарію
+            Operator->>ConversationScript: executeStep(stepNumber)
+            ConversationScript-->>Operator: текст наступного кроку
+        end
+        Operator->>TelephonyService: endCall(callId) — симуляція
+        TelephonyService-->>Call: дзвінок завершено
+        Call->>CallRecording: створити запис завершеної розмови
+        CallRecording-->>Call: збережений CallRecording
+        Note over Call,CallRecording: Recorded встановлюється лише після завершення дзвінка та збереження запису.
+        Call-->>Client: повідомити про завершення розмови
+
+        Supervisor->>CallRecording: отримати доступ і прослухати запис
+        alt Запис доступний
+            CallRecording-->>Supervisor: аудіозапис для оцінювання
+            Supervisor->>QualityEvaluation: оцінити запис і створити результат
+            QualityEvaluation-->>Supervisor: завершена оцінка
+            Supervisor->>Call: зберегти QualityEvaluation
+            Note over Call,QualityEvaluation: QualityEvaluated можливий лише після доступу до запису та збереження оцінки.
+            Call->>ConversationSummary: підготувати підсумок розмови
+            ConversationSummary-->>Call: готовий підсумок
+            Call->>EmailService: sendSummary(Client, ConversationSummary) — симуляція
+            alt Надсилання підтверджене
+                EmailService-->>Client: симульоване підтвердження доставки
+                Note over Call,EmailService: SummarySent встановлюється лише за наявності підсумку та підтвердження.
+            else Надсилання не підтверджене
+                EmailService-->>Call: помилка або відсутнє підтвердження
+                Note over Call: Стан залишається QualityEvaluated.
+            end
+        else Запис недоступний
+            CallRecording-->>Supervisor: відмовити в доступі
+            Note over Supervisor,Call: Оцінку не створено; QualityEvaluated не встановлюється.
+        end
+    else Оператор недоступний
+        Operator-->>Call: відхилити призначення
+        Note over Client,Call: Дзвінок не розпочато; Recorded не встановлюється.
+    end

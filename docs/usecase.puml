@@ -1,0 +1,33 @@
+@startuml
+left to right direction
+
+actor "Клієнт" as Client
+actor "Оператор" as Operator
+actor "Супервізор" as Supervisor
+
+rectangle "Система кол-центру" {
+  usecase "Подати заявку\nна зворотний дзвінок" as SubmitRequest
+  usecase "Обробити дзвінок\nза сценарієм розмови" as HandleCall
+  usecase "Прослухати запис\nрозмови" as ListenRecording
+  usecase "Оцінити якість\nрозмови" as EvaluateQuality
+  usecase "Отримати підсумок\nрозмови електронною поштою" as ReceiveSummary
+}
+
+Client --> SubmitRequest
+Client --> ReceiveSummary
+Operator --> HandleCall
+Supervisor --> ListenRecording
+Supervisor --> EvaluateQuality
+EvaluateQuality ..> ListenRecording : <<include>>
+
+note right of HandleCall
+Телефонний дзвінок і запис
+моделюються без зовнішніх викликів.
+end note
+
+note right of ReceiveSummary
+Надсилання електронною поштою
+симулюється; успіх фіксується
+лише після підтвердження.
+end note
+@enduml

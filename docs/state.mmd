@@ -1,0 +1,23 @@
+stateDiagram-v2
+    [*] --> NewRequest : валідні контактні дані та подано заявку
+    [*] --> RequestRejected : некоректні контактні дані
+
+    NewRequest --> OperatorUnavailable : оператор недоступний
+    NewRequest --> CallInProgress : оператор доступний і дзвінок розпочато
+
+    CallInProgress --> CallFailed : дзвінок перервано або не завершено
+    CallInProgress --> Recorded : дзвінок завершено та запис збережено
+
+    Recorded --> EvaluationFailed : запис недоступний
+    Recorded --> QualityEvaluated : запис прослухано й оцінку збережено
+
+    QualityEvaluated --> SummaryFailed : підсумок відсутній
+    QualityEvaluated --> SummaryFailed : симульоване надсилання не підтверджено
+    QualityEvaluated --> SummarySent : підсумок підготовлено й надсилання підтверджено
+
+    RequestRejected --> [*]
+    OperatorUnavailable --> [*]
+    CallFailed --> [*]
+    EvaluationFailed --> [*]
+    SummaryFailed --> [*]
+    SummarySent --> [*]
