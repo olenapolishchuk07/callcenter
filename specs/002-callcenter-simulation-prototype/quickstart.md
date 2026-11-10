@@ -11,7 +11,7 @@
 ```powershell
 $sources = Get-ChildItem -Path src -Recurse -Filter *.java | ForEach-Object { $_.FullName }
 New-Item -ItemType Directory -Force out | Out-Null
-javac -d out $sources
+javac -encoding UTF-8 -d out $sources
 java -cp out callcenter.Main
 ```
 

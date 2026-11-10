@@ -11,7 +11,7 @@ sequenceDiagram
     participant ConversationSummary
     participant EmailService
 
-    Client->>Call: requestCallback(бажаний час)
+    Client->>Call: requestCallback(callId, бажаний час, Operator, TelephonyService)
     Call->>Operator: перевірити доступність і призначити дзвінок
     alt Оператор доступний
         Operator-->>Call: підтвердити призначення

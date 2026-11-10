@@ -3,6 +3,7 @@ stateDiagram-v2
     [*] --> RequestRejected : некоректні контактні дані
 
     NewRequest --> OperatorUnavailable : оператор недоступний
+    NewRequest --> CallFailed : телефонію не вдалося розпочати
     NewRequest --> CallInProgress : оператор доступний і дзвінок розпочато
 
     CallInProgress --> CallFailed : дзвінок перервано або не завершено

@@ -8,14 +8,16 @@ classDiagram
         +CallCenterParticipant(participantId: String, displayName: String)
         +getParticipantId() String
         +getDisplayName() String
+        +getEmail() String
+        +getPhoneNumber() String
     }
     class Client {
         -String email
         -String phoneNumber
         +Client(participantId: String, displayName: String, email: String, phoneNumber: String)
         +getDisplayName() String
-        +requestCallback() Call
-        +requestCallback(preferredTime: String) Call
+        +requestCallback(callId: String, operator: Operator, telephonyService: TelephonyService) Call
+        +requestCallback(callId: String, preferredTime: String, operator: Operator, telephonyService: TelephonyService) Call
         +receiveSummary(summary: ConversationSummary) void
     }
     class Operator {
@@ -23,17 +25,21 @@ classDiagram
         +Operator(participantId: String, displayName: String, operatorStatus: String)
         +getDisplayName() String
         +handleCall(call: Call, script: ConversationScript) void
+        +isAvailable() boolean
+        +getOperatorStatus() String
     }
     class Supervisor {
         -String supervisorCode
         +Supervisor(participantId: String, displayName: String, supervisorCode: String)
         +getDisplayName() String
         +evaluate(recording: CallRecording, call: Call) QualityEvaluation
+        +getSupervisorCode() String
     }
     class ConversationScript {
         <<interface>>
         +executeStep(stepNumber: int) String
         +getStepCount() int
+        +getScriptName() String
     }
     class StandardConversationScript {
         -String scriptName
@@ -44,6 +50,8 @@ classDiagram
     }
     class Call {
         -String callId
+        -Client client
+        -Operator operator
         -String state
         -TelephonyService telephonyService
         -CallRecording recording
@@ -54,12 +62,21 @@ classDiagram
         +completeAndRecord() CallRecording
         +saveEvaluation(evaluation: QualityEvaluation) void
         +saveSummary(summary: ConversationSummary) void
+        +confirmSummarySent(success: boolean) void
+        +getCallId() String
+        +getState() String
+        +getClient() Client
+        +getOperator() Operator
+        +getRecording() CallRecording
+        +getQualityEvaluation() QualityEvaluation
+        +getSummary() ConversationSummary
     }
     class TelephonyService {
         -String serviceName
         +TelephonyService(serviceName: String)
         +startCall(callId: String) boolean
         +endCall(callId: String) boolean
+        +getServiceName() String
     }
     class CallRecording {
         -String recordingId
@@ -67,6 +84,9 @@ classDiagram
         -DateTime createdAt
         +CallRecording(recordingId: String, duration: int, createdAt: DateTime)
         +listen() String
+        +getRecordingId() String
+        +getDuration() int
+        +getCreatedAt() DateTime
     }
     class QualityEvaluation {
         -String evaluationId
@@ -74,6 +94,9 @@ classDiagram
         -String feedback
         +QualityEvaluation(evaluationId: String, score: int, feedback: String)
         +getResult() String
+        +getEvaluationId() String
+        +getScore() int
+        +getFeedback() String
     }
     class ConversationSummary {
         -String summaryId
@@ -81,11 +104,14 @@ classDiagram
         -DateTime preparedAt
         +ConversationSummary(summaryId: String, content: String, preparedAt: DateTime)
         +getContent() String
+        +getSummaryId() String
+        +getPreparedAt() DateTime
     }
     class EmailService {
         -String serviceName
         +EmailService(serviceName: String)
         +sendSummary(client: Client, summary: ConversationSummary) boolean
+        +getServiceName() String
     }
 
     CallCenterParticipant <|-- Client
@@ -104,7 +130,7 @@ classDiagram
     EmailService ..> Client : delivers to
     EmailService ..> ConversationSummary : sends
 
-    note for CallCenterParticipant "getParticipantId() є final"
+    note for CallCenterParticipant "getParticipantId() є final; getDisplayName() визначається спеціалізаціями"
     note for Client "getDisplayName() перевизначено; requestCallback() перевантажено для двох сигнатур"
     note for Operator "getDisplayName() перевизначено"
     note for Supervisor "getDisplayName() перевизначено"
