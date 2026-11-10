@@ -14,9 +14,14 @@ public class Supervisor extends CallCenterParticipant {
     }
 
     public QualityEvaluation evaluate(CallRecording recording, Call call) {
-        if (recording == null || call == null || call.getRecording() != recording
-                || !"Recorded".equals(call.getState())) {
+        if (call == null || !"Recorded".equals(call.getState())) {
             System.out.println("Оцінювання неможливе: доступного запису для дзвінка немає.");
+            return null;
+        }
+        if (recording == null || call.getRecording() != recording) {
+            call.failEvaluation();
+            System.out.println("Оцінювання неможливе: доступного запису для дзвінка немає."
+                    + " Стан дзвінка: " + call.getState() + ".");
             return null;
         }
         String details = recording.listen();

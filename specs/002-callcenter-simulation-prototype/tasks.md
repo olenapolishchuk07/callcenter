@@ -153,3 +153,26 @@ Task: T006 ConversationScript у src/main/java/callcenter/ConversationScript.jav
 3. US2 додає відтворювану перевірку негативних передумов.
 4. US3 узгоджує README, UML і CRC з кодом.
 5. Фаза 6 підтверджує команди й обмеження з кореня проєкту.
+
+## Фаза 11: Convergence
+
+- [X] T026 Узгодити й обґрунтувати статус технічного класу `ConsoleEncoding` у предметних артефактах або скоригувати його структуру, щоб підтвердити повноту відповідності класів per SC-004, FR-010, FR-011 (partial)
+
+## Фаза 9: Convergence
+
+- [X] T024 Узгодити CRC-зв’язки `TelephonyService` і `StandardConversationScript` із реалізацією та UML per FR-011, SC-004 (partial)
+
+## Фаза 7: Convergence
+
+- [X] T019 Узгодити контракт `ConversationScript` щодо `getScriptName()` між інтерфейсом, `StandardConversationScript`, `data-model.md` і `docs/class.mmd` per FR-010, FR-011 (partial)
+- [X] T020 Узгодити гілку невдалого надсилання підсумку в `docs/sequence.mmd` зі станом `SummaryFailed` у `data-model.md`, `docs/state.mmd` і `Call.confirmSummarySent` per FR-010, FR-011 (partial)
+
+## Фаза 8: Convergence
+
+- [X] T021 Узгодити `docs/class.mmd` із реалізацією щодо видимості полів `CallCenterParticipant` і розміщення `getEmail()` та `getPhoneNumber()` у `Client` per SC-004, FR-010, FR-011 (partial)
+- [X] T022 Відображати й перевіряти кінцевий стан `RequestRejected` для заявки з некоректними контактами per FR-010, T003, T013, data-model.md, docs/state.mmd (missing)
+- [X] T023 Реалізувати й перевірити перехід `Recorded` → `EvaluationFailed` для недоступного запису per FR-010, T013, data-model.md, docs/state.mmd (missing)
+
+## Фаза 10: Convergence
+
+- [X] T025 Узгодити кодування консольного виводу з UTF-8-консоллю PowerShell і перевірити відображення українських повідомлень per FR-005, US1/AC1, SC-002 (partial)

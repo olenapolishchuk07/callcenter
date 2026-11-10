@@ -39,6 +39,13 @@ public class Call {
         return true;
     }
 
+    public void rejectRequest() {
+        if (!"NewRequest".equals(state)) {
+            throw new IllegalStateException("Відхилити можна лише нову заявку.");
+        }
+        state = "RequestRejected";
+    }
+
     public CallRecording completeAndRecord() {
         if (!"CallInProgress".equals(state)) {
             throw new IllegalStateException("Записати можна лише дзвінок в обробці.");
@@ -58,6 +65,13 @@ public class Call {
         }
         qualityEvaluation = evaluation;
         state = "QualityEvaluated";
+    }
+
+    public void failEvaluation() {
+        if (!"Recorded".equals(state)) {
+            throw new IllegalStateException("Неуспішне оцінювання можливе лише після створення запису.");
+        }
+        state = "EvaluationFailed";
     }
 
     public void saveSummary(ConversationSummary summary) {

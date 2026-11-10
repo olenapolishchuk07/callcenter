@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) {
+        ConsoleEncoding.configureUtf8();
         Client client = new Client("CLIENT-001", "Олена Демонстраційна",
                 "olena@example.invalid", "+380000000000");
         Operator operator = new Operator("OPERATOR-001", "Андрій Оператор", "Доступний");

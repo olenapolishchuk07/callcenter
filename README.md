@@ -11,10 +11,13 @@
 ## Компіляція та запуск демонстрації
 
 ```powershell
+$utf8 = [System.Text.UTF8Encoding]::new($false)
+[Console]::OutputEncoding = $utf8
+$OutputEncoding = $utf8
 $sources = Get-ChildItem -Path src -Recurse -Filter *.java | ForEach-Object { $_.FullName }
 New-Item -ItemType Directory -Force out | Out-Null
 javac -encoding UTF-8 -d out $sources
-java -cp out callcenter.Main
+java '-Dfile.encoding=UTF-8' -cp out callcenter.Main
 ```
 
 Успішний сценарій виводить стани `NewRequest`, `CallInProgress`, `Recorded`, `QualityEvaluated`, `SummarySent` у цьому порядку та повідомляє про завершення демонстрації.
@@ -24,7 +27,7 @@ java -cp out callcenter.Main
 Після компіляції запустіть:
 
 ```powershell
-java -cp out callcenter.CallLifecycleChecks
+java '-Dfile.encoding=UTF-8' -cp out callcenter.CallLifecycleChecks
 ```
 
 Перевірки підтверджують, що оцінювання без запису й незавершена обробка не створюють хибних успішних станів, а також що клієнт відхиляє відсутні або порожні контакти й запис не приймає від'ємну тривалість.

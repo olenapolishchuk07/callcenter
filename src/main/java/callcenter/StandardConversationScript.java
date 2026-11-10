@@ -32,6 +32,7 @@ public class StandardConversationScript implements ConversationScript {
         return steps.size();
     }
 
+    @Override
     public String getScriptName() {
         return scriptName;
     }

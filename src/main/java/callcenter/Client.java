@@ -21,8 +21,13 @@ public class Client extends CallCenterParticipant {
 
     public Call requestCallback(String callId, String preferredTime, Operator operator,
             TelephonyService telephonyService) {
-        requireContactDetails();
         Call call = new Call(callId, this, operator, telephonyService);
+        if (!hasContactDetails()) {
+            call.rejectRequest();
+            System.out.println("Заявку відхилено: не вказано адресу електронної пошти або номер телефону."
+                    + " Стан дзвінка: " + call.getState() + ".");
+            return call;
+        }
         if (preferredTime != null && !preferredTime.trim().isEmpty()) {
             System.out.println("Клієнт " + displayName + " просить зворотний дзвінок: " + preferredTime + ".");
         } else {
@@ -46,14 +51,8 @@ public class Client extends CallCenterParticipant {
         return phoneNumber;
     }
 
-    private void requireContactDetails() {
-        if (email == null || email.trim().isEmpty()) {
-            System.out.println("Заявку відхилено: не вказано адресу електронної пошти.");
-            throw new IllegalArgumentException("Для заявки потрібна адреса електронної пошти.");
-        }
-        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-            System.out.println("Заявку відхилено: не вказано номер телефону.");
-            throw new IllegalArgumentException("Для заявки потрібен номер телефону.");
-        }
+    private boolean hasContactDetails() {
+        return email != null && !email.trim().isEmpty()
+                && phoneNumber != null && !phoneNumber.trim().isEmpty();
     }
 }

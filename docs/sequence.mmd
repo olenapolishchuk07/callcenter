@@ -44,7 +44,8 @@ sequenceDiagram
                 Note over Call,EmailService: SummarySent встановлюється лише за наявності підсумку та підтвердження.
             else Надсилання не підтверджене
                 EmailService-->>Call: помилка або відсутнє підтвердження
-                Note over Call: Стан залишається QualityEvaluated.
+                Call->>Call: confirmSummarySent(false)
+                Note over Call: Перехід до SummaryFailed; процес завершується.
             end
         else Запис недоступний
             CallRecording-->>Supervisor: відмовити в доступі

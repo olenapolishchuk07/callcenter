@@ -3,19 +3,19 @@ classDiagram
 
     class CallCenterParticipant {
         <<abstract>>
-        #String participantId
+        -String participantId
         #String displayName
-        +CallCenterParticipant(participantId: String, displayName: String)
+        #CallCenterParticipant(participantId: String, displayName: String)
         +getParticipantId() String
         +getDisplayName() String
-        +getEmail() String
-        +getPhoneNumber() String
     }
     class Client {
         -String email
         -String phoneNumber
         +Client(participantId: String, displayName: String, email: String, phoneNumber: String)
         +getDisplayName() String
+        +getEmail() String
+        +getPhoneNumber() String
         +requestCallback(callId: String, operator: Operator, telephonyService: TelephonyService) Call
         +requestCallback(callId: String, preferredTime: String, operator: Operator, telephonyService: TelephonyService) Call
         +receiveSummary(summary: ConversationSummary) void
@@ -45,6 +45,7 @@ classDiagram
         -String scriptName
         -List~String~ steps
         +StandardConversationScript(scriptName: String, steps: List~String~)
+        +getScriptName() String
         +executeStep(stepNumber: int) String
         +getStepCount() int
     }
@@ -58,9 +59,11 @@ classDiagram
         -QualityEvaluation qualityEvaluation
         -ConversationSummary summary
         +Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService)
+        +rejectRequest() void
         +start() boolean
         +completeAndRecord() CallRecording
         +saveEvaluation(evaluation: QualityEvaluation) void
+        +failEvaluation() void
         +saveSummary(summary: ConversationSummary) void
         +confirmSummarySent(success: boolean) void
         +getCallId() String
@@ -81,12 +84,12 @@ classDiagram
     class CallRecording {
         -String recordingId
         -int duration
-        -DateTime createdAt
-        +CallRecording(recordingId: String, duration: int, createdAt: DateTime)
+        -LocalDateTime createdAt
+        +CallRecording(recordingId: String, duration: int, createdAt: LocalDateTime)
         +listen() String
         +getRecordingId() String
         +getDuration() int
-        +getCreatedAt() DateTime
+        +getCreatedAt() LocalDateTime
     }
     class QualityEvaluation {
         -String evaluationId
@@ -101,17 +104,22 @@ classDiagram
     class ConversationSummary {
         -String summaryId
         -String content
-        -DateTime preparedAt
-        +ConversationSummary(summaryId: String, content: String, preparedAt: DateTime)
+        -LocalDateTime preparedAt
+        +ConversationSummary(summaryId: String, content: String, preparedAt: LocalDateTime)
         +getContent() String
         +getSummaryId() String
-        +getPreparedAt() DateTime
+        +getPreparedAt() LocalDateTime
     }
     class EmailService {
         -String serviceName
         +EmailService(serviceName: String)
         +sendSummary(client: Client, summary: ConversationSummary) boolean
         +getServiceName() String
+    }
+    class ConsoleEncoding {
+        <<utility>>
+        -ConsoleEncoding()
+        +configureUtf8() void
     }
 
     CallCenterParticipant <|-- Client
@@ -136,3 +144,4 @@ classDiagram
     note for Supervisor "getDisplayName() перевизначено"
     note for TelephonyService "Симуляція телефонії; зовнішніх викликів немає"
     note for EmailService "Симуляція електронної пошти; успіх лише після підтвердження"
+    note for ConsoleEncoding "Технічна утиліта, не предметна сутність; статично налаштовує UTF-8 для стандартних потоків консолі"

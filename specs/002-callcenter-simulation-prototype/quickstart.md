@@ -9,10 +9,13 @@
 ## Компіляція й запуск у PowerShell
 
 ```powershell
+$utf8 = [System.Text.UTF8Encoding]::new($false)
+[Console]::OutputEncoding = $utf8
+$OutputEncoding = $utf8
 $sources = Get-ChildItem -Path src -Recurse -Filter *.java | ForEach-Object { $_.FullName }
 New-Item -ItemType Directory -Force out | Out-Null
 javac -encoding UTF-8 -d out $sources
-java -cp out callcenter.Main
+java '-Dfile.encoding=UTF-8' -cp out callcenter.Main
 ```
 
 Очікується автоматичний демонстраційний сценарій українською з фіксованими вигаданими даними. Перевірте, що стани виводяться у порядку `NewRequest`, `CallInProgress`, `Recorded`, `QualityEvaluated`, `SummarySent`, після чого явно повідомляється про завершення. Повідомлення описують симульовану телефонію та електронну пошту; реальних викликів немає.
@@ -22,7 +25,7 @@ java -cp out callcenter.Main
 Після компіляції виконайте:
 
 ```powershell
-java -cp out callcenter.CallLifecycleChecks
+java '-Dfile.encoding=UTF-8' -cp out callcenter.CallLifecycleChecks
 ```
 
 Перевірки мають підтвердити, що:
