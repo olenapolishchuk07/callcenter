@@ -4,7 +4,7 @@ sequenceDiagram
     participant Call
     participant Operator as Оператор
     participant TelephonyService
-    participant StandardConversationScript as ConversationScript
+    participant ConversationScript as StandardConversationScript
     participant CallRecording
     participant Supervisor as Супервізор
     participant QualityEvaluation
@@ -45,13 +45,13 @@ sequenceDiagram
             else Надсилання не підтверджене
                 EmailService-->>Call: помилка або відсутнє підтвердження
                 Call->>Call: confirmSummarySent(false)
-                Note over Call: Перехід до SummaryFailed; процес завершується.
+                Note over Call: Перехід до SummaryFailed, процес завершується.
             end
         else Запис недоступний
             CallRecording-->>Supervisor: відмовити в доступі
-            Note over Supervisor,Call: Оцінку не створено; QualityEvaluated не встановлюється.
+            Note over Supervisor,Call: Оцінку не створено, QualityEvaluated не встановлюється.
         end
     else Оператор недоступний
         Operator-->>Call: відхилити призначення
-        Note over Client,Call: Дзвінок не розпочато; Recorded не встановлюється.
+        Note over Client,Call: Дзвінок не розпочато, Recorded не встановлюється.
     end
