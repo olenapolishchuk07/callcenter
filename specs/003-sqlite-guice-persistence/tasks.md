@@ -56,17 +56,18 @@
 - [ ] T014 [P] [US1] Створити JUnit-тест таблиці, порожньої таблиці та екранування `<`, `>`, `&`, лапок і апострофа у `src/test/java/callcenter/HtmlReportGeneratorTest.java`
 - [ ] T015 [P] [US1] Створити JUnit-тест від’ємної тривалості: `duration >= 0` у `src/test/java/callcenter/CallRecordingTest.java`
 - [ ] T016 [P] [US1] Додати перевірку JUnit для українського повідомлення про помилку SQLite у `src/test/java/callcenter/SqliteRecordingStoreTest.java`
+- [ ] T016a [P] [US1] Додати JUnit-перевірки українських повідомлень і припинення роботи для помилок читання SQLite та генерації HTML у `src/test/java/callcenter/SqliteRecordingStoreTest.java` та `src/test/java/callcenter/HtmlReportGeneratorTest.java`
 
 ### Implementation for User Story 1
 
 - [ ] T017 [US1] Додати впровадження `RecordingStore` через `@Inject`-конструктор у `src/main/java/callcenter/Call.java`
 - [ ] T018 [US1] Викликати предметне збереження запису під час успішного завершення сценарію в `src/main/java/callcenter/Call.java`
-- [ ] T019 [US1] Додати предметне читання записів і створення HTML-таблиці у `src/main/java/callcenter/HtmlReportGenerator.java`
+- [ ] T019 [US1] Додати предметне створення HTML-таблиці на основі переданого генератору списку записів у `src/main/java/callcenter/HtmlReportGenerator.java`; читання сховища не входить до відповідальності генератора
 - [ ] T020 [US1] Екранувати всі текстові значення для HTML як дані, не змінюючи збережені значення, у `src/main/java/callcenter/HtmlReportGenerator.java`
 - [ ] T021 [US1] Зберегти порожній звіт із заголовками `recordingId`, `duration`, `createdAt` і без рядків у `target/callcenter-report.html`
 - [ ] T022 [US1] Змінити точки створення `Call` у `src/main/java/callcenter/Client.java`, щоб приймати одержаний через Guice екземпляр без втрати сумісних сигнатур
 - [ ] T023 [US1] Створити Injector і отримати `Call` через `injector.getInstance(Call.class)` у `src/main/java/callcenter/Main.java`
-- [ ] T024 [US1] Після успішного сценарію прочитати сховище й створити звіт у `src/main/java/callcenter/Main.java`
+- [ ] T024 [US1] Після успішного сценарію прочитати сховище через `RecordingStore`, передати отримані записи в `HtmlReportGenerator` і створити звіт у `src/main/java/callcenter/Main.java`
 - [ ] T025 [US1] Повідомляти українською про помилки з’єднання, запису, читання та генерації й припиняти запуск у `src/main/java/callcenter/Main.java`
 
 **Checkpoint**: Історія 1 повністю реалізована та самостійно перевіряється
@@ -79,10 +80,10 @@
 
 **Independent Test**: Переглянути `docs/class.mmd`, перевірити список композицій/агрегацій і переконатися, що `Call` залежить лише від `RecordingStore`, а SQL відсутній поза `SqliteRecordingStore`
 
-- [ ] T026 [P] [US2] Додати перелік зв’язків агрегації та композиції з `docs/class.mmd` до `specs/003-sqlite-guice-persistence/spec.md`
+- [ ] T026 [P] [US2] Зафіксувати в `spec.md` факт єдиного придатного зв’язку композиції `Call *-- "0..1" CallRecording` із `docs/class.mmd`
 - [ ] T027 [US2] Використати лише обрану композицію `Call *-- "0..1" CallRecording` і не прив’язувати збереження до іншої сутності у `src/main/java/callcenter/Call.java`
 - [ ] T028 [US2] Передати `RecordingStore` у конструктор `Call`, не додаючи статичного доступу до сховища у `src/main/java/callcenter/Call.java`
-- [ ] T029 [US2] Додати в `CallCenterModule` зв’язування інтерфейсу з реалізацією та класу-цілого для наданого контексту у `src/main/java/callcenter/CallCenterModule.java`
+- [ ] T029 [US2] Додати в `CallCenterModule` зв’язування `RecordingStore` до `SqliteRecordingStore`, надання JDBC-з’єднання та конфігурацію `Call` для constructor injection у `src/main/java/callcenter/CallCenterModule.java`
 - [ ] T030 [US2] Додати JUnit-перевірку зв’язування Guice й уникнення прямого `new Call(...)` у створювачі застосунку у `src/test/java/callcenter/CallCenterModuleTest.java`
 
 **Checkpoint**: Історія 2 перевіряє інверсію залежностей і вибір композиції незалежно від звіту
