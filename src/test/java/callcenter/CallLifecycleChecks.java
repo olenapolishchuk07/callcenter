@@ -1,5 +1,7 @@
 package callcenter;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
@@ -17,7 +19,8 @@ public class CallLifecycleChecks {
 
     private static void checkEvaluationWithoutRecording() {
         Client client = validClient();
-        Call call = new Call("CHECK-NO-RECORDING", client, availableOperator(), new TelephonyService("Перевірка"));
+        Call call = createCall("CHECK-NO-RECORDING", client, availableOperator(),
+                new TelephonyService("Перевірка"));
         QualityEvaluation result = new Supervisor("SUP-CHECK", "Перевіряльник", "SUP-CHECK")
                 .evaluate(null, call);
         require(result == null, "Оцінювання без запису не має створювати результат.");
@@ -27,8 +30,10 @@ public class CallLifecycleChecks {
     }
 
     private static void checkUnavailableRecording() {
-        Call call = validClient().requestCallback("CHECK-UNAVAILABLE-RECORDING", availableOperator(),
+        Client client = validClient();
+        Call call = createCall("CHECK-UNAVAILABLE-RECORDING", client, availableOperator(),
                 new TelephonyService("Перевірка"));
+        client.requestCallback("CHECK-UNAVAILABLE-RECORDING", null, call);
         new Operator("OP-CHECK", "Оператор перевірки", "Доступний").handleCall(call,
                 new StandardConversationScript("Перевірка", Arrays.asList("Завершити дзвінок.")));
         require("Recorded".equals(call.getState()), "Передумова перевірки має створити запис.");
@@ -49,7 +54,7 @@ public class CallLifecycleChecks {
                 return false;
             }
         };
-        Call call = new Call("CHECK-FAILED-CALL", validClient(), availableOperator(), telephony);
+        Call call = createCall("CHECK-FAILED-CALL", validClient(), availableOperator(), telephony);
         ConversationScript script = new StandardConversationScript("Перевірка",
                 Arrays.asList("Виконати перевірочний крок."));
         new Operator("OP-CHECK", "Оператор перевірки", "Доступний").handleCall(call, script);
@@ -83,8 +88,9 @@ public class CallLifecycleChecks {
 
     private static void checkSuccessfulLifecycle() {
         Operator operator = availableOperator();
-        Call call = validClient().requestCallback("CHECK-SUCCESS", operator,
-                new TelephonyService("Перевірка"));
+        Client client = validClient();
+        Call call = createCall("CHECK-SUCCESS", client, operator, new TelephonyService("Перевірка"));
+        client.requestCallback("CHECK-SUCCESS", null, call);
         operator.handleCall(call, new StandardConversationScript("Перевірка",
                 Arrays.asList("Завершити успішний сценарій.")));
         require("Recorded".equals(call.getState()), "Успішна обробка має створити запис.");
@@ -104,8 +110,16 @@ public class CallLifecycleChecks {
     }
 
     private static void expectRejectedRequest(Client client, String message) {
-        Call call = client.requestCallback("CHECK-CONTACT", availableOperator(), new TelephonyService("Перевірка"));
+        Call call = createCall("CHECK-CONTACT", client, availableOperator(), new TelephonyService("Перевірка"));
+        client.requestCallback("CHECK-CONTACT", null, call);
         require("RequestRejected".equals(call.getState()), message);
+    }
+
+    private static Call createCall(String callId, Client client, Operator operator,
+            TelephonyService telephony) {
+        Injector injector = Guice.createInjector(
+                new CallCenterModule(callId, client, operator, telephony));
+        return injector.getInstance(Call.class);
     }
 
     private static void require(boolean condition, String message) {

@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class HtmlReportGeneratorTest {
     @Test
@@ -31,5 +33,22 @@ class HtmlReportGeneratorTest {
         String escaped = Files.readString(report, StandardCharsets.UTF_8);
         assertTrue(escaped.contains("&lt;&gt;&amp;&quot;&#39;"));
         assertTrue(!escaped.contains("<td><>&\"'</td>"));
+    }
+
+    @Test
+    void reportsUkrainianHtmlGenerationErrorAndStops() throws Exception {
+        Path target = Path.of("target");
+        Path report = target.resolve("callcenter-report.html");
+        Files.createDirectories(target);
+        Files.deleteIfExists(report);
+        Files.createDirectory(report);
+
+        try {
+            IllegalStateException exception = assertThrows(IllegalStateException.class,
+                    () -> new HtmlReportGenerator().generate(List.of()));
+            assertEquals(true, exception.getMessage().startsWith("Помилка генерації HTML-звіту:"));
+        } finally {
+            Files.deleteIfExists(report);
+        }
     }
 }

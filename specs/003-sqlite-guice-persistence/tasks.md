@@ -203,3 +203,8 @@ T016 — JUnit-тест помилки SQLite в src/test/java/callcenter/Sqlite
 - Кожна користувацька історія завершується незалежно перевірюваним інкрементом
 - Для тестів спочатку виконати їх і зафіксувати очікувану невдачу
 - Не використовувати `mvn clean` у перевірці збереження між запусками
+
+## Phase 6: Convergence
+
+- [X] T044 CRITICAL Усунути пряме створення `Call` поза Guice в `src/main/java/callcenter/Client.java` та забезпечити отримання об’єкта цілого через `Injector` перетворенням сумісних точок створення на прийняття/передавання впровадженого екземпляра per FR-009, Constitution V (contradicts)
+- [X] T045 Додати JUnit-перевірки українських повідомлень і припинення роботи для помилок читання SQLite та генерації HTML у `src/test/java/callcenter/SqliteRecordingStoreTest.java` та `src/test/java/callcenter/HtmlReportGeneratorTest.java` per T016a, FR-015 (partial)

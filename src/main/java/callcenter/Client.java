@@ -15,16 +15,6 @@ public class Client extends CallCenterParticipant {
         return displayName;
     }
 
-    public Call requestCallback(String callId, Operator operator, TelephonyService telephonyService) {
-        return requestCallback(callId, null, operator, telephonyService);
-    }
-
-    public Call requestCallback(String callId, String preferredTime, Operator operator,
-            TelephonyService telephonyService) {
-        Call call = new Call(callId, this, operator, telephonyService);
-        return startRequest(call, preferredTime);
-    }
-
     public Call requestCallback(String callId, String preferredTime, Call injectedCall) {
         return startRequest(injectedCall, preferredTime);
     }

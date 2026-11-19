@@ -62,4 +62,11 @@ class SqliteRecordingStoreTest {
                 () -> store.save(new CallRecording("REC-ERR", 1, LocalDateTime.now())),
                 "Помилка збереження даних у SQLite:");
     }
+
+    @Test
+    void reportsUkrainianSqliteReadErrorAndStops() throws Exception {
+        connection.close();
+        IllegalStateException exception = assertThrows(IllegalStateException.class, store::findAll);
+        assertEquals(true, exception.getMessage().startsWith("Помилка читання даних із SQLite:"));
+    }
 }
