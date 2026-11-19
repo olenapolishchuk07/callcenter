@@ -22,6 +22,14 @@ public class Client extends CallCenterParticipant {
     public Call requestCallback(String callId, String preferredTime, Operator operator,
             TelephonyService telephonyService) {
         Call call = new Call(callId, this, operator, telephonyService);
+        return startRequest(call, preferredTime);
+    }
+
+    public Call requestCallback(String callId, String preferredTime, Call injectedCall) {
+        return startRequest(injectedCall, preferredTime);
+    }
+
+    private Call startRequest(Call call, String preferredTime) {
         if (!hasContactDetails()) {
             call.rejectRequest();
             System.out.println("Заявку відхилено: не вказано адресу електронної пошти або номер телефону."

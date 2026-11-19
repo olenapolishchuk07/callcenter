@@ -2,6 +2,8 @@ package callcenter;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 public class Main {
     public static void main(String[] args) {
@@ -18,10 +20,23 @@ public class Main {
                         "Підбиття підсумків розмови."));
 
         System.out.println("Демонстрація обробки звернення клієнта.");
-        Call call = client.requestCallback("CALL-001", "сьогодні", operator, telephony);
+        Injector injector;
+        try {
+            injector = Guice.createInjector(new CallCenterModule("CALL-001", client, operator, telephony));
+        } catch (Exception exception) {
+            System.out.println("Помилка підключення до бази даних SQLite: " + exception.getMessage());
+            return;
+        }
+        Call call = injector.getInstance(Call.class);
+        client.requestCallback("CALL-001", "сьогодні", call);
         System.out.println("Стан дзвінка: " + call.getState() + ".");
 
-        operator.handleCall(call, script);
+        try {
+            operator.handleCall(call, script);
+        } catch (IllegalStateException exception) {
+            System.out.println(exception.getMessage());
+            return;
+        }
         if (call.getRecording() == null) {
             throw new IllegalStateException("Демонстраційний дзвінок не вдалося записати.");
         }
@@ -41,6 +56,15 @@ public class Main {
             throw new IllegalStateException("Не вдалося підтвердити надсилання підсумку.");
         }
         System.out.println("Стан дзвінка: " + call.getState() + ".");
+
+        try {
+            RecordingStore store = injector.getInstance(RecordingStore.class);
+            new HtmlReportGenerator().generate(store.findAll());
+        } catch (IllegalStateException exception) {
+            System.out.println(exception.getMessage());
+            return;
+        }
+        System.out.println("Звіт створено у target/callcenter-report.html.");
         System.out.println("Демонстраційний сценарій завершено.");
     }
 }

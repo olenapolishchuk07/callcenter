@@ -8,8 +8,14 @@ public class CallRecording {
     private final LocalDateTime createdAt;
 
     public CallRecording(String recordingId, int duration, LocalDateTime createdAt) {
+        if (recordingId == null || recordingId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Ідентифікатор запису є обов'язковим.");
+        }
         if (duration < 0) {
             throw new IllegalArgumentException("Тривалість запису не може бути від'ємною.");
+        }
+        if (createdAt == null) {
+            throw new IllegalArgumentException("Дата й час створення запису є обов'язковими.");
         }
         this.recordingId = recordingId;
         this.duration = duration;

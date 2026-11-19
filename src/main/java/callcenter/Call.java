@@ -1,5 +1,7 @@
 package callcenter;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import java.time.LocalDateTime;
 
 public class Call {
@@ -11,8 +13,15 @@ public class Call {
     private CallRecording recording;
     private QualityEvaluation qualityEvaluation;
     private ConversationSummary summary;
+    private final RecordingStore recordingStore;
 
     public Call(String callId, Client client, Operator operator, TelephonyService telephonyService) {
+        this(callId, client, operator, telephonyService, null);
+    }
+
+    @Inject
+    public Call(@Named("callId") String callId, Client client, Operator operator, TelephonyService telephonyService,
+            RecordingStore recordingStore) {
         if (callId == null || callId.trim().isEmpty() || client == null || operator == null
                 || telephonyService == null) {
             throw new IllegalArgumentException("Для дзвінка потрібні ідентифікатор, учасники та служба телефонії.");
@@ -21,6 +30,7 @@ public class Call {
         this.client = client;
         this.operator = operator;
         this.telephonyService = telephonyService;
+        this.recordingStore = recordingStore;
     }
 
     public boolean start() {
@@ -55,6 +65,9 @@ public class Call {
             return null;
         }
         recording = new CallRecording(callId + "-REC", 120, LocalDateTime.now());
+        if (recordingStore != null) {
+            recordingStore.save(recording);
+        }
         state = "Recorded";
         return recording;
     }

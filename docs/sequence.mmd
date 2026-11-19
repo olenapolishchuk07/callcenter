@@ -1,6 +1,7 @@
 sequenceDiagram
     autonumber
     actor Client as Клієнт
+    participant Main
     participant Call
     participant Operator as Оператор
     participant TelephonyService
@@ -10,6 +11,19 @@ sequenceDiagram
     participant QualityEvaluation
     participant ConversationSummary
     participant EmailService
+    participant CallCenterModule
+    participant Injector
+    participant RecordingStore
+    participant SqliteRecordingStore
+    participant HtmlReportGenerator
+
+    Main->>CallCenterModule: налаштувати прив'язки та JDBC-з'єднання
+    CallCenterModule->>RecordingStore: прив'язати RecordingStore
+    CallCenterModule->>SqliteRecordingStore: прив'язати реалізацію
+    Main->>Injector: Guice.createInjector(CallCenterModule)
+    Main->>Injector: injector.getInstance(Call)
+    Injector->>Call: constructor injection RecordingStore
+    Call-->>Main: отриманий Guice-екземпляр
 
     Client->>Call: requestCallback(callId, бажаний час, Operator, TelephonyService)
     Call->>Operator: перевірити доступність і призначити дзвінок

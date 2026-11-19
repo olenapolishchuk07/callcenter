@@ -42,3 +42,12 @@ mvn exec:java -Dexec.mainClass=callcenter.Main
 5. Перевірте помилку SQLite/звіту: застосунок виводить українське повідомлення про помилку та не заявляє про успішне збереження чи створення актуального звіту.
 
 Деталі полів і ключа наведені в [data-model.md](data-model.md), контракт команд і артефактів — у [contracts/cli-report.md](contracts/cli-report.md).
+
+## Результат перевірки
+
+Перевірку виконано 19 листопада 2026 року:
+
+- `mvn package` завершився успішно: 7 JUnit-перевірок пройдено, помилок немає.
+- `mvn exec:java "-Dexec.mainClass=callcenter.Main"` виконано двічі без очищення `target`.
+- Створено `target/callcenter.db` і `target/callcenter-report.html`.
+- Повторне виконання залишило один рядок із ідентифікатором `CALL-001-REC`, що підтверджує оновлення UPSERT без дублювання.

@@ -56,9 +56,11 @@ classDiagram
         -String state
         -TelephonyService telephonyService
         -CallRecording recording
+        -RecordingStore recordingStore
         -QualityEvaluation qualityEvaluation
         -ConversationSummary summary
         +Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService)
+        +@Inject Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService, recordingStore: RecordingStore)
         +rejectRequest() void
         +start() boolean
         +completeAndRecord() CallRecording
@@ -73,6 +75,28 @@ classDiagram
         +getRecording() CallRecording
         +getQualityEvaluation() QualityEvaluation
         +getSummary() ConversationSummary
+    }
+    class RecordingStore {
+        <<interface>>
+        +save(recording: CallRecording) void
+        +findAll() List~CallRecording~
+    }
+    class SqliteRecordingStore {
+        -Connection connection
+        +SqliteRecordingStore(connection: Connection)
+        +save(recording: CallRecording) void
+        +findAll() List~CallRecording~
+    }
+    class CallCenterModule {
+        <<AbstractModule>>
+        +configure() void
+        +provideConnection() Connection
+    }
+    class HtmlReportGenerator {
+        +generate(recordings: List~CallRecording~) void
+    }
+    class Main {
+        +main(args: String[]) void
     }
     class TelephonyService {
         -String serviceName
@@ -129,6 +153,12 @@ classDiagram
     Operator ..> ConversationScript : uses
     Call ..> TelephonyService : injected instance
     Call *-- "0..1" CallRecording : owns
+    Call --> RecordingStore : constructor injection
+    RecordingStore <|.. SqliteRecordingStore
+    CallCenterModule --> RecordingStore : binds
+    CallCenterModule --> SqliteRecordingStore : binds implementation
+    Main --> CallCenterModule : creates
+    Main --> HtmlReportGenerator : uses
     Call "1" --> "0..1" QualityEvaluation : stores
     Call "1" --> "0..1" ConversationSummary : stores
     Client "1" --> "0..*" Call : requests
