@@ -166,21 +166,31 @@ public class Call {
         }
     }
 
-    public CallCenterOperationResult updateRecording(String recordingId, CallRecording recording) {
-        if (recording == null || recordingId == null
-                || !recordingId.trim().equals(recording.getRecordingId())) {
-            return CallCenterOperationResult.failure(
-                    CallCenterOperationResult.Type.INVALID,
-                    "Ідентифікатор запису в тілі й адресі має збігатися.");
-        }
-        if (changesForbidden()) {
-            return CallCenterOperationResult.failure(
-                    CallCenterOperationResult.Type.CONFLICT, "Зміну записів заборонено поточним станом дзвінка.");
-        }
+    public CallCenterOperationResult addRecording(String recordingId, Object duration, String createdAt) {
         try {
-            if (recordingStore.findById(recordingId) == null) {
+            return addRecording(new CallRecording(recordingId, duration, createdAt));
+        } catch (IllegalArgumentException exception) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.INVALID, exception.getMessage());
+        }
+    }
+
+    public CallCenterOperationResult updateRecording(String recordingId, CallRecording recording) {
+        try {
+            if (recordingId == null || recordingStore.findById(recordingId) == null) {
                 return CallCenterOperationResult.failure(
                         CallCenterOperationResult.Type.NOT_FOUND, "Запис не знайдено.");
+            }
+            if (recording == null
+                    || !recordingId.trim().equals(recording.getRecordingId())) {
+                return CallCenterOperationResult.failure(
+                        CallCenterOperationResult.Type.INVALID,
+                        "Ідентифікатор запису в тілі й адресі має збігатися.");
+            }
+            if (changesForbidden()) {
+                return CallCenterOperationResult.failure(
+                        CallCenterOperationResult.Type.CONFLICT,
+                        "Зміну записів заборонено поточним станом дзвінка.");
             }
             recordingStore.update(recording);
             getRecordings();
@@ -195,16 +205,40 @@ public class Call {
         }
     }
 
+    public CallCenterOperationResult updateRecording(
+            String pathId, String recordingId, Object duration, String createdAt) {
+        try {
+            if (pathId == null || recordingStore.findById(pathId) == null) {
+                return CallCenterOperationResult.failure(
+                        CallCenterOperationResult.Type.NOT_FOUND, "Запис не знайдено.");
+            }
+            return updateRecording(pathId,
+                    new CallRecording(recordingId, duration, createdAt));
+        } catch (IllegalArgumentException exception) {
+            if (exception.getMessage().contains("Ідентифікатор запису")) {
+                return CallCenterOperationResult.failure(
+                        CallCenterOperationResult.Type.INVALID, exception.getMessage());
+            }
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.INVALID, exception.getMessage());
+        }
+    }
+
     public CallCenterOperationResult deleteRecording(String recordingId) {
         if (recordingId == null || recordingId.trim().isEmpty()) {
             return CallCenterOperationResult.failure(
                     CallCenterOperationResult.Type.INVALID, "Ідентифікатор запису є обов'язковим.");
         }
-        if (changesForbidden()) {
-            return CallCenterOperationResult.failure(
-                    CallCenterOperationResult.Type.CONFLICT, "Зміну записів заборонено поточним станом дзвінка.");
-        }
         try {
+            if (recordingStore.findById(recordingId) == null) {
+                return CallCenterOperationResult.failure(
+                        CallCenterOperationResult.Type.NOT_FOUND, "Запис не знайдено.");
+            }
+            if (changesForbidden()) {
+                return CallCenterOperationResult.failure(
+                        CallCenterOperationResult.Type.CONFLICT,
+                        "Зміну записів заборонено поточним станом дзвінка.");
+            }
             if (!recordingStore.delete(recordingId)) {
                 return CallCenterOperationResult.failure(
                         CallCenterOperationResult.Type.NOT_FOUND, "Запис не знайдено.");

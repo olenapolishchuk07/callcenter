@@ -12,9 +12,10 @@ public class Main {
         Injector injector = Guice.createInjector(
                 new CallCenterModule("CALL-001", client, operator, telephony));
         Call call = injector.getInstance(Call.class);
-        CallCenterController controller = new CallCenterController(call);
         WebServer webServer = injector.getInstance(WebServer.class);
+        CallCenterController controller = new CallCenterController(call);
+        CallCenterWebView view = new CallCenterWebView();
         System.out.println("Вебсервер Call Center запущено на http://localhost:8080/");
-        webServer.start(controller, 8080);
+        webServer.start(controller, view, 8080);
     }
 }

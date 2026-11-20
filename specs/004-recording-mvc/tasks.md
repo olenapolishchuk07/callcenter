@@ -253,3 +253,59 @@ T036 HTTP-перевірки DELETE і помилок
 - Не створювати тестові записи у базі під час першого запуску
 - SQL залишати лише в `SqliteRecordingStore`
 - Помилки сховища не маскувати як успіх
+
+---
+
+## Phase 6: Convergence
+
+- [X] T054 HIGH Перед перевіркою забороненого стану перевіряти існування запису в `src/main/java/callcenter/Call.java`, щоб відсутній запис для виправлення чи видалення повертав `404` за FR-008 та US3/AC3
+- [X] T055 Додати в `src/test/java/callcenter/CallTest.java` перевірки заборонених додавання, виправлення й видалення для всіх визначених станів і недоступного оператора, перевіряючи незмінність сховища за FR-007 та US3/AC4
+- [X] T056 Додати в `src/test/java/callcenter/SqliteRecordingStoreTest.java` перевірки відхилення дубля insert, оновлення невідомого ID та видалення існуючого й невідомого ID за T023 та T034
+- [X] T057 Додати в `src/test/java/callcenter/JavalinWebServerTest.java` HTTP-перевірки POST/PUT/DELETE, статусів `201/200/400/404/409/500`, некоректного JSON та українських повідомлень за T025, T036 та SC-003
+- [X] T058 Додати в `src/test/java/callcenter/SqliteRecordingStoreTest.java` окрему перевірку delete існуючого запису й повернення `false` для невідомого ID за T034
+
+## Phase 7: Convergence
+
+- [X] T059 Remove native browser validation constraints from `src/main/resources/public/index.html` and keep record validation exclusively on the server per FR-003 and FR-005
+- [X] T060 Add in `src/test/java/callcenter/CallTest.java` mutation tests for `CallFailed`, `QualityEvaluated`, and `SummarySent`, verifying forbidden add/update/delete leave storage unchanged per FR-007 and US3/AC4
+- [X] T061 Align `docs/class.mmd` with the implemented architecture by removing obsolete `HtmlReportGenerator` and `ConsoleEncoding` entries and locating `SqliteRecordingStore` correctly per FR-018 and FR-022
+- [X] T062 Update `README.md` duplicate `recordingId` status from `400` to `409` to match FR-021, the HTTP contract, and implementation
+
+## Phase 8: Convergence
+
+- [X] T063 HIGH Узгодити потік «контролер — вигляд» у `src/main/java/callcenter/CallCenterController.java` та `src/main/java/callcenter/JavalinWebServer.java`, щоб результат моделі передавався вигляду для формування відповіді за FR-011 і FR-012 (partial)
+- [X] T064 Зібрати вигляд і контролер під час запуску в `src/main/java/callcenter/Main.java`, передаючи узгоджені MVC-об'єкти вебсерверу відповідно до FR-018 (partial)
+- [X] T065 HIGH Не перетворювати порожню тривалість на `0` у `src/main/resources/public/script.js`; передавати відсутню або нечислову тривалість для серверного відхилення з `400` за FR-005 та US2/AC1 (partial)
+
+## Phase 9: Convergence
+
+- [X] T066 HIGH Реалізувати передавання результату моделі до `CallCenterWebView` через `CallCenterController` у `src/main/java/callcenter/CallCenterController.java` та `src/main/java/callcenter/JavalinWebServer.java` за FR-011 (partial)
+- [X] T067 MEDIUM Прибрати Singleton-прив’язки `CallCenterController` і `CallCenterWebView` у `src/main/java/callcenter/CallCenterModule.java`, оскільки вони не є інфраструктурними одиничними об’єктами за FR-017 (contradicts)
+
+## Phase 10: Convergence
+
+- [X] T068 CRITICAL Прибрати Singleton-прив’язки `CallCenterController` і `CallCenterWebView` у `src/main/java/callcenter/CallCenterModule.java`; зберегти Singleton лише для інфраструктурних одиничних об’єктів за FR-017 і Конституцією V (contradicts)
+
+## Phase 11: Convergence
+
+- [X] T069 CRITICAL Прибрати Singleton-прив’язки `CallCenterController` і `CallCenterWebView` у `src/main/java/callcenter/CallCenterModule.java`; залишити Singleton лише для інфраструктурних одиничних об’єктів за FR-017 і Конституцією V (contradicts)
+- [X] T070 CRITICAL Усунути предметну валідацію та parsing-перевірки запису з `src/main/java/callcenter/CallCenterController.java`; дозволити моделі перевіряти `recordingId`, `duration` і `createdAt`, зберігши контрольне створення `CallRecording` та передачу результату моделі за FR-011 і Конституцією V (contradicts)
+
+## Phase 12: Convergence
+
+- [X] T071 HIGH Виправити порядок перевірки у `src/main/java/callcenter/Call.java`: для виправлення спочатку перевіряти існування запису за `{id}` і лише після цього перевіряти збіг ідентифікатора у тілі та заборонений стан, щоб відсутній запис завжди повертав `404` за FR-008 та US2/AC4-US3/AC3
+
+## Phase 13: Convergence
+
+- [X] T072 HIGH Створювати `CallRecording` у `src/main/java/callcenter/CallCenterController.java` для створення та виправлення, передаючи готовий об’єкт моделі для предметної перевірки та координації CRUD за FR-011 і plan: MVC boundary
+- [X] T073 HIGH Отримати `Call` і `WebServer` явно через Guice в `src/main/java/callcenter/Main.java`, а потім зібрати контролер і вигляд узгодженим MVC-потоком запуску за FR-018
+
+## Phase 14: Convergence
+
+- [X] T074 MEDIUM Доповнити `docs/class.mmd` оголошеннями класів `CallCenterController`, `CallCenterWebView` і `JavalinWebServer`, а також CRUD-операціями та зв'язками MVC/інфраструктури за FR-022
+
+## Phase 15: Convergence
+
+- [X] T075 HIGH Створювати `CallRecording` у `src/main/java/callcenter/CallCenterController.java` для операцій створення та виправлення та передавати готовий об’єкт методам моделі замість сирих значень за FR-011
+- [X] T076 HIGH Отримати `Call` і `WebServer` явно через Guice в `src/main/java/callcenter/Main.java`, після чого узгодити створення контролера, вигляду та запуск сервера за FR-018
+- [X] T077 MEDIUM Доповнити `docs/class.mmd` повними оголошеннями операцій і зв’язків для `Call`, `CallRecording`, `CallCenterController`, `CallCenterWebView`, `JavalinWebServer`, `RecordingStore` і MVC-шляхів CRUD за FR-022

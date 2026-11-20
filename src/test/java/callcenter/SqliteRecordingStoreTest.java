@@ -10,7 +10,9 @@ import java.sql.DriverManager;
 import java.time.LocalDateTime;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SqliteRecordingStoreTest {
     private Path database;
@@ -42,6 +44,21 @@ class SqliteRecordingStoreTest {
         assertEquals(1, recordings.size());
         assertEquals(180, recordings.get(0).getDuration());
         assertEquals(firstTime.plusHours(1), recordings.get(0).getCreatedAt());
+    }
+
+    @Test
+    void rejectsDuplicateInsertUnknownUpdateAndDeleteResults() {
+        LocalDateTime time = LocalDateTime.of(2026, 11, 19, 20, 4);
+        store.insert(new CallRecording("REC-1", 120, time));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> store.insert(new CallRecording("REC-1", 180, time)));
+        assertThrows(IllegalArgumentException.class,
+                () -> store.update(new CallRecording("UNKNOWN", 180, time)));
+
+        assertTrue(store.delete("REC-1"));
+        assertFalse(store.delete("REC-1"));
+        assertFalse(store.delete("UNKNOWN"));
     }
 
     @Test

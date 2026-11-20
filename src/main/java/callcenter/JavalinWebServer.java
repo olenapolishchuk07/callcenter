@@ -17,8 +17,7 @@ public class JavalinWebServer implements WebServer {
     }
 
     @Override
-    public void start(CallCenterController controller, int port) {
-        CallCenterWebView view = new CallCenterWebView();
+    public void start(CallCenterController controller, CallCenterWebView view, int port) {
         app = Javalin.create(config -> config.staticFiles.add("/public"));
 
         app.get("/", ctx -> ctx.redirect("/index.html"));
@@ -29,10 +28,10 @@ public class JavalinWebServer implements WebServer {
                 Map<String, Object> body = readRecording(ctx);
                 CallCenterOperationResult result = controller.create(
                         stringValue(body, "recordingId"),
-                        integerValue(body, "duration"),
+                        body.get("duration"),
                         stringValue(body, "createdAt"));
                 apply(ctx, view.create(result));
-            } catch (RuntimeException exception) {
+            } catch (Exception exception) {
                 apply(ctx, view.failure(CallCenterOperationResult.failure(
                         CallCenterOperationResult.Type.INVALID,
                         "Некоректне JSON-повідомлення.")));
@@ -44,10 +43,10 @@ public class JavalinWebServer implements WebServer {
                 CallCenterOperationResult result = controller.update(
                         ctx.pathParam("id"),
                         stringValue(body, "recordingId"),
-                        integerValue(body, "duration"),
+                        body.get("duration"),
                         stringValue(body, "createdAt"));
                 apply(ctx, view.update(result));
-            } catch (RuntimeException exception) {
+            } catch (Exception exception) {
                 apply(ctx, view.failure(CallCenterOperationResult.failure(
                         CallCenterOperationResult.Type.INVALID,
                         "Некоректне JSON-повідомлення.")));
@@ -79,20 +78,6 @@ public class JavalinWebServer implements WebServer {
         return value == null ? null : value.toString();
     }
 
-    private Integer integerValue(Map<String, Object> body, String key) {
-        Object value = body.get(key);
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-        if (value instanceof String text) {
-            try {
-                return Integer.parseInt(text);
-            } catch (NumberFormatException exception) {
-                return null;
-            }
-        }
-        return null;
-    }
 
     private void apply(Context ctx, CallCenterWebView.HttpResult result) {
         try {

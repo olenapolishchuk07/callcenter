@@ -25,5 +25,10 @@ class CallCenterControllerTest {
                 controller.create("REC", 42, "2026-11-20T14:30:00").getType());
         assertEquals(CallCenterOperationResult.Type.INVALID,
                 controller.create("", 42, "2026-11-20T14:30:00").getType());
+        assertEquals(CallCenterOperationResult.Type.INVALID,
+                controller.create("REC-NULL", null, "2026-11-20T14:30:00").getType());
+        assertEquals(CallCenterOperationResult.Type.NOT_FOUND,
+                controller.update("REC", "DIFFERENT", 42,
+                        "2026-11-20T14:30:00").getType());
     }
 }

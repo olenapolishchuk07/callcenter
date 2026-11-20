@@ -108,9 +108,11 @@ async function sendChange(method, url, body) {
 
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const durationText = durationInput.value.trim();
+    const parsedDuration = durationText === "" ? null : Number(durationText);
     const body = {
         recordingId: recordingIdInput.value,
-        duration: Number(durationInput.value),
+        duration: Number.isInteger(parsedDuration) ? parsedDuration : null,
         createdAt: createdAtInput.value
     };
     if (editingId) {

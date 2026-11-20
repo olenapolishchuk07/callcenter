@@ -5,7 +5,6 @@ classDiagram
         class Call
         class CallRecording
         class RecordingStore
-        class SqliteRecordingStore
     end
     box view
         class CallCenterWebView
@@ -14,6 +13,7 @@ classDiagram
         class CallCenterController
     end
     box infrastructure
+        class SqliteRecordingStore
         class WebServer
         class JavalinWebServer
         class CallCenterModule
@@ -75,6 +75,7 @@ classDiagram
         -String state
         -TelephonyService telephonyService
         -CallRecording recording
+        -List~CallRecording~ recordings
         -RecordingStore recordingStore
         -QualityEvaluation qualityEvaluation
         -ConversationSummary summary
@@ -92,8 +93,34 @@ classDiagram
         +getClient() Client
         +getOperator() Operator
         +getRecording() CallRecording
+        +getRecordings() List~CallRecording~
+        +findAllRecordings() CallCenterOperationResult
+        +addRecording(recording: CallRecording) CallCenterOperationResult
+        +updateRecording(recordingId: String, recording: CallRecording) CallCenterOperationResult
+        +deleteRecording(recordingId: String) CallCenterOperationResult
         +getQualityEvaluation() QualityEvaluation
         +getSummary() ConversationSummary
+    }
+    class CallCenterController {
+        -Call call
+        +CallCenterController(call: Call)
+        +readAll() CallCenterOperationResult
+        +create(recordingId: String, duration: Object, createdAt: String) CallCenterOperationResult
+        +update(pathId: String, recordingId: String, duration: Object, createdAt: String) CallCenterOperationResult
+        +delete(recordingId: String) CallCenterOperationResult
+    }
+    class CallCenterWebView {
+        +read(result: CallCenterOperationResult) HttpResult
+        +create(result: CallCenterOperationResult) HttpResult
+        +update(result: CallCenterOperationResult) HttpResult
+        +delete(result: CallCenterOperationResult) HttpResult
+        +failure(result: CallCenterOperationResult) HttpResult
+    }
+    class JavalinWebServer {
+        -ObjectMapper objectMapper
+        -Javalin app
+        +start(controller: CallCenterController, view: CallCenterWebView, port: int) void
+        +stop() void
     }
     class RecordingStore {
         <<interface>>
@@ -117,9 +144,6 @@ classDiagram
         +configure() void
         +provideConnection() Connection
     }
-    class HtmlReportGenerator {
-        +generate(recordings: List~CallRecording~) void
-    }
     class Main {
         +main(args: String[]) void
     }
@@ -135,6 +159,7 @@ classDiagram
         -int duration
         -LocalDateTime createdAt
         +CallRecording(recordingId: String, duration: int, createdAt: LocalDateTime)
+        +CallRecording(recordingId: String, duration: Object, createdAt: String)
         +listen() String
         +getRecordingId() String
         +getDuration() int
@@ -165,12 +190,6 @@ classDiagram
         +sendSummary(client: Client, summary: ConversationSummary) boolean
         +getServiceName() String
     }
-    class ConsoleEncoding {
-        <<utility>>
-        -ConsoleEncoding()
-        +configureUtf8() void
-    }
-
     CallCenterParticipant <|-- Client
     CallCenterParticipant <|-- Operator
     CallCenterParticipant <|-- Supervisor
@@ -180,10 +199,15 @@ classDiagram
     Call *-- "0..*" CallRecording : owns
     Call --> RecordingStore : constructor injection
     RecordingStore <|.. SqliteRecordingStore
+    CallCenterController --> Call : coordinates
+    JavalinWebServer --> CallCenterController : passes requests
+    JavalinWebServer --> CallCenterWebView : serializes response
+    CallCenterController --> CallCenterWebView : result
+    WebServer <|.. JavalinWebServer
+    CallCenterModule --> WebServer : binds
     CallCenterModule --> RecordingStore : binds
     CallCenterModule --> SqliteRecordingStore : binds implementation
     Main --> CallCenterModule : creates
-    Main --> HtmlReportGenerator : uses
     Call "1" --> "0..1" QualityEvaluation : stores
     Call "1" --> "0..1" ConversationSummary : stores
     Client "1" --> "0..*" Call : requests
@@ -199,4 +223,3 @@ classDiagram
     note for Supervisor "getDisplayName() перевизначено"
     note for TelephonyService "Симуляція телефонії; зовнішніх викликів немає"
     note for EmailService "Симуляція електронної пошти; успіх лише після підтвердження"
-    note for ConsoleEncoding "Технічна утиліта, не предметна сутність; статично налаштовує UTF-8 для стандартних потоків консолі"
