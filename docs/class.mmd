@@ -200,7 +200,7 @@ classDiagram
     EmailService ..> ConversationSummary : sends
 
     note for CallCenterParticipant "getParticipantId() є final; getDisplayName() є abstract"
-    note for Call "П'ятиаргументний конструктор позначений @Inject; callId має @Named(\"callId\")."
+    note for Call "П'ятиаргументний конструктор позначений @Inject; callId має @Named('callId')."
     note for CallCenterModule "AbstractModule: configure() прив'язує RecordingStore до Singleton SqliteRecordingStore; provideConnection() є @Provides та @Singleton."
     note for SqliteRecordingStore "Конструктор позначений @Inject; Connection надає CallCenterModule."
     note for Client "requestCallback(String, String, Call) використовує переданий Injector-екземпляр; не створює Call."

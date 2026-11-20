@@ -46,11 +46,12 @@ sequenceDiagram
     CallCenterModule-->>Injector: Connection (@Provides, @Singleton)
     Injector->>SqliteRecordingStore: new SqliteRecordingStore(connection)
     SqliteRecordingStore->>SqliteRecordingStore: ensureSchema()
-    SqliteRecordingStore->>Connection: createStatement(); execute(CREATE TABLE IF NOT EXISTS call_recordings)
+    SqliteRecordingStore->>Connection: createStatement()
+    SqliteRecordingStore->>Connection: execute(CREATE TABLE IF NOT EXISTS call_recordings)
     Connection-->>SqliteRecordingStore: схема готова
     SqliteRecordingStore-->>Injector: Singleton RecordingStore
     Injector->>Call: @Inject Call("CALL-001", client, operator, telephony, recordingStore)
-    Note over Injector,Call: callId передано через @Named("callId"); інші залежності — Guice bindings.
+    Note over Injector,Call: callId передано через @Named("callId"), інші залежності — Guice bindings.
     Note over Main,CallCenterModule: Помилка підключення під час getInstance(Call.class) виходить за межі catch навколо createInjector.
     Call-->>Injector: Call
     Injector-->>Main: call
@@ -58,7 +59,7 @@ sequenceDiagram
     Main->>Client: requestCallback("CALL-001", "сьогодні", call)
     Client->>Client: startRequest(call, "сьогодні")
     alt Контактні дані email і phoneNumber є (у Main так)
-        Client-->>Main: call; надрукувати заявку на зворотний дзвінок
+        Client-->>Main: call, надрукувати заявку на зворотний дзвінок
     else Відсутні контактні дані
         Client->>Call: rejectRequest()
         Call-->>Client: стан RequestRejected
@@ -73,7 +74,7 @@ sequenceDiagram
     Operator-->>Call: true для "Доступний"
     Call->>TelephonyService: startCall("CALL-001")
     TelephonyService-->>Call: true
-    Call-->>Operator: true; стан CallInProgress
+    Call-->>Operator: true, стан CallInProgress
     loop step = 1..script.getStepCount()
         Operator->>ConversationScript: getStepCount()
         ConversationScript-->>Operator: кількість кроків
@@ -92,7 +93,7 @@ sequenceDiagram
     Connection-->>SqliteRecordingStore: запис збережено
     SqliteRecordingStore-->>RecordingStore: void
     RecordingStore-->>Call: void
-    Call-->>Operator: recording; стан Recorded
+    Call-->>Operator: recording, стан Recorded
     Operator-->>Main: handleCall завершено
     Note over Main,Operator: Якщо handleCall кидає IllegalStateException, Main друкує повідомлення й завершується.
 
@@ -138,4 +139,4 @@ sequenceDiagram
     Main->>HtmlReportGenerator: generate(recordings)
     HtmlReportGenerator->>HtmlReportGenerator: escape(recordingId, createdAt)
     HtmlReportGenerator-->>Main: записати target/callcenter-report.html
-    Note over Main,HtmlReportGenerator: Main перехоплює IllegalStateException у блоці звіту; потім повідомляє про успіх сценарію.
+    Note over Main,HtmlReportGenerator: Main перехоплює IllegalStateException у блоці звіту, потім повідомляє про успіх сценарію.
