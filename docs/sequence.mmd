@@ -1,48 +1,80 @@
 sequenceDiagram
     autonumber
     actor Користувач
-    participant Сторінка
-    participant JavalinWebServer as Javalin адаптер
-    participant CallCenterController as Контролер
-    participant Call as Модель
-    participant RecordingStore as Сховище
-    participant SQLite
 
-    Користувач->>Сторінка: GET /
-    Сторінка->>JavalinWebServer: Завантажити статичні ресурси
-    JavalinWebServer-->>Сторінка: index.html, script.js, style.css
-    Сторінка->>JavalinWebServer: GET /api/CallCenter
+    box view
+        participant WebPage as Вебсторінка (script.js)
+    end
+    box infrastructure
+        participant JavalinWebServer
+    end
+    box controller
+        participant CallCenterController
+    end
+    box view
+        participant CallCenterWebView
+    end
+    box model
+        participant Call
+    end
+    box infrastructure
+        participant SqliteRecordingStore
+    end
+    participant SQLite as База даних SQLite
+
+    Користувач->>WebPage: відкриває http://localhost:8080/
+    WebPage->>JavalinWebServer: GET / (редірект на /index.html)
+    JavalinWebServer-->>WebPage: index.html, script.js, style.css
+    WebPage->>JavalinWebServer: GET /api/CallCenter
     JavalinWebServer->>CallCenterController: readAll()
     CallCenterController->>Call: findAllRecordings()
-    Call->>RecordingStore: findAll()
-    RecordingStore->>SQLite: SELECT
-    SQLite-->>RecordingStore: записи
-    RecordingStore-->>Call: List~CallRecording~
-    Call-->>CallCenterController: OperationResult
-    CallCenterController-->>JavalinWebServer: OperationResult
-    JavalinWebServer-->>Сторінка: 200, JSON-масив
+    Call->>SqliteRecordingStore: findAll()
+    SqliteRecordingStore->>SQLite: SELECT recordingId, duration, createdAt
+    SQLite-->>SqliteRecordingStore: рядки таблиці
+    SqliteRecordingStore-->>Call: список CallRecording
+    Call-->>CallCenterController: CallCenterOperationResult
+    CallCenterController-->>JavalinWebServer: CallCenterOperationResult
+    JavalinWebServer->>CallCenterWebView: read(result)
+    CallCenterWebView-->>JavalinWebServer: HttpResult(200, recordings)
+    JavalinWebServer-->>WebPage: 200 OK, JSON-масив
+    WebPage-->>Користувач: таблиця записів
 
-    Користувач->>Сторінка: Створити або виправити
-    Сторінка->>JavalinWebServer: POST або PUT з JSON
-    JavalinWebServer->>CallCenterController: create/update(values)
-    CallCenterController->>Call: addRecording/updateRecording
-    Call->>Call: перевірити стан і дані
-    Call->>RecordingStore: insert/update/findById
-    RecordingStore->>SQLite: INSERT або UPDATE
-    SQLite-->>RecordingStore: результат
-    RecordingStore-->>Call: результат
-    Call-->>CallCenterController: OperationResult
-    CallCenterController-->>JavalinWebServer: OperationResult
-    JavalinWebServer-->>Сторінка: 201/200 або 400/409/500
-    Сторінка->>JavalinWebServer: Повторити GET
+    Користувач->>WebPage: натискає "Зберегти" (додавання або виправлення)
+    WebPage->>JavalinWebServer: POST /api/CallCenter або PUT /api/CallCenter/{id} (JSON)
+    JavalinWebServer->>CallCenterController: create(...) або update(pathId, ...)
+    CallCenterController->>Call: addRecording(...) або updateRecording(pathId, ...)
+    Call->>Call: перевіряє стан, оператора й правила
+    Call->>SqliteRecordingStore: findById(id), insert(...) або update(...)
+    SqliteRecordingStore->>SQLite: SELECT / INSERT / UPDATE
+    SQLite-->>SqliteRecordingStore: результат SQL
+    SqliteRecordingStore-->>Call: результат
+    Call-->>CallCenterController: CallCenterOperationResult
+    CallCenterController-->>JavalinWebServer: CallCenterOperationResult
+    JavalinWebServer->>CallCenterWebView: create(result) або update(result)
+    CallCenterWebView-->>JavalinWebServer: HttpResult(201/200 або 400/404/409/500, Message)
+    JavalinWebServer-->>WebPage: HTTP-статус + JSON-повідомлення
+    WebPage-->>Користувач: повідомлення про успіх або відмову
+    opt Успішна зміна (response.ok)
+        WebPage->>JavalinWebServer: GET /api/CallCenter (loadRecordings)
+        JavalinWebServer-->>WebPage: 200 OK, оновлений JSON-масив
+    end
 
-    Користувач->>Сторінка: Підтвердити видалення
-    Сторінка->>JavalinWebServer: DELETE /api/CallCenter/{id}
+    Користувач->>WebPage: натискає "Видалити" і підтверджує confirm()
+    WebPage->>JavalinWebServer: DELETE /api/CallCenter/{id}
     JavalinWebServer->>CallCenterController: delete(id)
     CallCenterController->>Call: deleteRecording(id)
-    Call->>RecordingStore: delete(id)
-    RecordingStore->>SQLite: DELETE
-    SQLite-->>RecordingStore: змінені рядки
-    RecordingStore-->>Call: результат
-    Call-->>JavalinWebServer: OperationResult
-    JavalinWebServer-->>Сторінка: 200 або 404/409/500
+    Call->>Call: перевіряє існування й заборону змін
+    Call->>SqliteRecordingStore: findById(id), delete(id)
+    SqliteRecordingStore->>SQLite: DELETE FROM call_recordings
+    SQLite-->>SqliteRecordingStore: кількість видалених рядків
+    SqliteRecordingStore-->>Call: boolean
+    Call-->>CallCenterController: CallCenterOperationResult
+    CallCenterController-->>JavalinWebServer: CallCenterOperationResult
+    JavalinWebServer->>CallCenterWebView: delete(result)
+    CallCenterWebView-->>JavalinWebServer: HttpResult(200 або 400/404/409/500, Message)
+    JavalinWebServer-->>WebPage: HTTP-статус + JSON-повідомлення
+    WebPage-->>Користувач: повідомлення про успіх або відмову
+    opt Успішне видалення (response.ok)
+        WebPage->>JavalinWebServer: GET /api/CallCenter (loadRecordings)
+        JavalinWebServer-->>WebPage: 200 OK, оновлений JSON-масив
+    end

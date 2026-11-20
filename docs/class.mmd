@@ -1,213 +1,235 @@
 classDiagram
     direction LR
 
-    box model
-        class Call
-        class CallRecording
-        class RecordingStore
-    end
-    box view
-        class CallCenterWebView
-    end
-    box controller
-        class CallCenterController
-    end
-    box infrastructure
-        class SqliteRecordingStore
-        class WebServer
-        class JavalinWebServer
-        class CallCenterModule
-        class Main
-    end
+    namespace model {
+        class CallCenterParticipant {
+            <<abstract>>
+            -String participantId
+            #String displayName
+            #CallCenterParticipant(participantId: String, displayName: String)
+            +getParticipantId() String
+            +getDisplayName() String
+        }
+        class Client {
+            -String email
+            -String phoneNumber
+            +Client(participantId: String, displayName: String, email: String, phoneNumber: String)
+            +getDisplayName() String
+            +getEmail() String
+            +getPhoneNumber() String
+            +requestCallback(callId: String, operator: Operator, telephonyService: TelephonyService) Call
+            +requestCallback(callId: String, preferredTime: String, operator: Operator, telephonyService: TelephonyService) Call
+            +receiveSummary(summary: ConversationSummary) void
+        }
+        class Operator {
+            -String operatorStatus
+            +Operator(participantId: String, displayName: String, operatorStatus: String)
+            +getDisplayName() String
+            +handleCall(call: Call, script: ConversationScript) void
+            +isAvailable() boolean
+            +getOperatorStatus() String
+        }
+        class Supervisor {
+            -String supervisorCode
+            +Supervisor(participantId: String, displayName: String, supervisorCode: String)
+            +getDisplayName() String
+            +evaluate(recording: CallRecording, call: Call) QualityEvaluation
+            +getSupervisorCode() String
+        }
+        class ConversationScript {
+            <<interface>>
+            +executeStep(stepNumber: int) String
+            +getStepCount() int
+            +getScriptName() String
+        }
+        class StandardConversationScript {
+            -String scriptName
+            -List~String~ steps
+            +StandardConversationScript(scriptName: String, steps: List~String~)
+            +getScriptName() String
+            +executeStep(stepNumber: int) String
+            +getStepCount() int
+        }
+        class Call {
+            -String callId
+            -Client client
+            -Operator operator
+            -TelephonyService telephonyService
+            -String state
+            -CallRecording recording
+            -List~CallRecording~ recordings
+            -QualityEvaluation qualityEvaluation
+            -ConversationSummary summary
+            -RecordingStore recordingStore
+            +Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService)
+            +Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService, recordingStore: RecordingStore)
+            +start() boolean
+            +rejectRequest() void
+            +completeAndRecord() CallRecording
+            +saveEvaluation(evaluation: QualityEvaluation) void
+            +failEvaluation() void
+            +saveSummary(summary: ConversationSummary) void
+            +confirmSummarySent(success: boolean) void
+            +getRecordings() List~CallRecording~
+            +findAllRecordings() CallCenterOperationResult
+            +addRecording(recording: CallRecording) CallCenterOperationResult
+            +addRecording(recordingId: String, duration: Object, createdAt: String) CallCenterOperationResult
+            +updateRecording(recordingId: String, recording: CallRecording) CallCenterOperationResult
+            +updateRecording(pathId: String, recordingId: String, duration: Object, createdAt: String) CallCenterOperationResult
+            +deleteRecording(recordingId: String) CallCenterOperationResult
+        }
+        class CallRecording {
+            -String recordingId
+            -int duration
+            -LocalDateTime createdAt
+            +CallRecording(recordingId: String, duration: int, createdAt: LocalDateTime)
+            +CallRecording(recordingId: String, duration: Object, createdAt: String)
+            +listen() String
+            +getRecordingId() String
+            +getDuration() int
+            +getCreatedAt() LocalDateTime
+        }
+        class CallCenterOperationResult {
+            -boolean success
+            -String message
+            -Type type
+            -List~CallRecording~ recordings
+            -CallRecording recording
+            +success(message: String) CallCenterOperationResult
+            +success(message: String, recordings: List~CallRecording~) CallCenterOperationResult
+            +success(message: String, recording: CallRecording) CallCenterOperationResult
+            +failure(type: Type, message: String) CallCenterOperationResult
+            +isSuccess() boolean
+            +getMessage() String
+            +getType() Type
+            +getRecordings() List~CallRecording~
+            +getRecording() CallRecording
+        }
+        class RecordingStore {
+            <<interface>>
+            +findAll() List~CallRecording~
+            +findById(recordingId: String) CallRecording
+            +insert(recording: CallRecording) void
+            +update(recording: CallRecording) void
+            +delete(recordingId: String) boolean
+            +save(recording: CallRecording) void
+        }
+        class QualityEvaluation {
+            -String evaluationId
+            -int score
+            -String feedback
+            +QualityEvaluation(evaluationId: String, score: int, feedback: String)
+            +getResult() String
+            +getEvaluationId() String
+            +getScore() int
+            +getFeedback() String
+        }
+        class ConversationSummary {
+            -String summaryId
+            -String content
+            -LocalDateTime preparedAt
+            +ConversationSummary(summaryId: String, content: String, preparedAt: LocalDateTime)
+            +getContent() String
+            +getSummaryId() String
+            +getPreparedAt() LocalDateTime
+        }
+        class TelephonyService {
+            -String serviceName
+            +TelephonyService(serviceName: String)
+            +startCall(callId: String) boolean
+            +endCall(callId: String) boolean
+            +getServiceName() String
+        }
+        class EmailService {
+            -String serviceName
+            +EmailService(serviceName: String)
+            +sendSummary(client: Client, summary: ConversationSummary) boolean
+            +getServiceName() String
+        }
+    }
 
-    class CallCenterParticipant {
-        <<abstract>>
-        -String participantId
-        #String displayName
-        #CallCenterParticipant(participantId: String, displayName: String)
-        +getParticipantId() String
-        +getDisplayName() String
+    namespace controller {
+        class CallCenterController {
+            -Call call
+            +CallCenterController(call: Call)
+            +readAll() CallCenterOperationResult
+            +create(recordingId: String, duration: Object, createdAt: String) CallCenterOperationResult
+            +update(pathId: String, recordingId: String, duration: Object, createdAt: String) CallCenterOperationResult
+            +delete(recordingId: String) CallCenterOperationResult
+        }
     }
-    class Client {
-        -String email
-        -String phoneNumber
-        +Client(participantId: String, displayName: String, email: String, phoneNumber: String)
-        +getDisplayName() String
-        +getEmail() String
-        +getPhoneNumber() String
-        +requestCallback(callId: String, operator: Operator, telephonyService: TelephonyService) Call
-        +requestCallback(callId: String, preferredTime: String, operator: Operator, telephonyService: TelephonyService) Call
-        +receiveSummary(summary: ConversationSummary) void
+
+    namespace view {
+        class WebPage {
+            <<static resources>>
+            +index.html
+            +script.js
+            +style.css
+        }
+        class CallCenterWebView {
+            +read(result: CallCenterOperationResult) HttpResult
+            +create(result: CallCenterOperationResult) HttpResult
+            +update(result: CallCenterOperationResult) HttpResult
+            +delete(result: CallCenterOperationResult) HttpResult
+            +failure(result: CallCenterOperationResult) HttpResult
+        }
+        class HttpResult {
+            -int status
+            -Object body
+            +HttpResult(status: int, body: Object)
+            +getStatus() int
+            +getStatusCode() int
+            +getBody() Object
+        }
     }
-    class Operator {
-        -String operatorStatus
-        +Operator(participantId: String, displayName: String, operatorStatus: String)
-        +getDisplayName() String
-        +handleCall(call: Call, script: ConversationScript) void
-        +isAvailable() boolean
-        +getOperatorStatus() String
+
+    namespace infrastructure {
+        class WebServer {
+            <<interface>>
+            +start(controller: CallCenterController, view: CallCenterWebView, port: int) void
+            +stop() void
+        }
+        class JavalinWebServer {
+            -ObjectMapper objectMapper
+            -Javalin app
+            +JavalinWebServer()
+            +start(controller: CallCenterController, view: CallCenterWebView, port: int) void
+            +stop() void
+        }
+        class SqliteRecordingStore {
+            -Connection connection
+            +SqliteRecordingStore(connection: Connection)
+            +findAll() List~CallRecording~
+            +findById(recordingId: String) CallRecording
+            +insert(recording: CallRecording) void
+            +update(recording: CallRecording) void
+            +delete(recordingId: String) boolean
+            +save(recording: CallRecording) void
+        }
+        class CallCenterModule {
+            <<AbstractModule>>
+            -String callId
+            -Client client
+            -Operator operator
+            -TelephonyService telephonyService
+            +CallCenterModule(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService)
+            #configure() void
+            +provideConnection() Connection
+        }
+        class Main {
+            +main(args: String[]) void
+        }
     }
-    class Supervisor {
-        -String supervisorCode
-        +Supervisor(participantId: String, displayName: String, supervisorCode: String)
-        +getDisplayName() String
-        +evaluate(recording: CallRecording, call: Call) QualityEvaluation
-        +getSupervisorCode() String
-    }
-    class ConversationScript {
-        <<interface>>
-        +executeStep(stepNumber: int) String
-        +getStepCount() int
-        +getScriptName() String
-    }
-    class StandardConversationScript {
-        -String scriptName
-        -List~String~ steps
-        +StandardConversationScript(scriptName: String, steps: List~String~)
-        +getScriptName() String
-        +executeStep(stepNumber: int) String
-        +getStepCount() int
-    }
-    class Call {
-        -String callId
-        -Client client
-        -Operator operator
-        -String state
-        -TelephonyService telephonyService
-        -CallRecording recording
-        -List~CallRecording~ recordings
-        -RecordingStore recordingStore
-        -QualityEvaluation qualityEvaluation
-        -ConversationSummary summary
-        +Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService)
-        +@Inject Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService, recordingStore: RecordingStore)
-        +rejectRequest() void
-        +start() boolean
-        +completeAndRecord() CallRecording
-        +saveEvaluation(evaluation: QualityEvaluation) void
-        +failEvaluation() void
-        +saveSummary(summary: ConversationSummary) void
-        +confirmSummarySent(success: boolean) void
-        +getCallId() String
-        +getState() String
-        +getClient() Client
-        +getOperator() Operator
-        +getRecording() CallRecording
-        +getRecordings() List~CallRecording~
-        +findAllRecordings() CallCenterOperationResult
-        +addRecording(recording: CallRecording) CallCenterOperationResult
-        +updateRecording(recordingId: String, recording: CallRecording) CallCenterOperationResult
-        +deleteRecording(recordingId: String) CallCenterOperationResult
-        +getQualityEvaluation() QualityEvaluation
-        +getSummary() ConversationSummary
-    }
-    class CallCenterController {
-        -Call call
-        +CallCenterController(call: Call)
-        +readAll() CallCenterOperationResult
-        +create(recordingId: String, duration: Object, createdAt: String) CallCenterOperationResult
-        +update(pathId: String, recordingId: String, duration: Object, createdAt: String) CallCenterOperationResult
-        +delete(recordingId: String) CallCenterOperationResult
-    }
-    class CallCenterWebView {
-        +read(result: CallCenterOperationResult) HttpResult
-        +create(result: CallCenterOperationResult) HttpResult
-        +update(result: CallCenterOperationResult) HttpResult
-        +delete(result: CallCenterOperationResult) HttpResult
-        +failure(result: CallCenterOperationResult) HttpResult
-    }
-    class JavalinWebServer {
-        -ObjectMapper objectMapper
-        -Javalin app
-        +start(controller: CallCenterController, view: CallCenterWebView, port: int) void
-        +stop() void
-    }
-    class RecordingStore {
-        <<interface>>
-        +findAll() List~CallRecording~
-        +findById(recordingId: String) CallRecording
-        +insert(recording: CallRecording) void
-        +update(recording: CallRecording) void
-        +delete(recordingId: String) boolean
-    }
-    class SqliteRecordingStore {
-        -Connection connection
-        +SqliteRecordingStore(connection: Connection)
-        +findAll() List~CallRecording~
-        +findById(recordingId: String) CallRecording
-        +insert(recording: CallRecording) void
-        +update(recording: CallRecording) void
-        +delete(recordingId: String) boolean
-    }
-    class CallCenterModule {
-        <<AbstractModule>>
-        +configure() void
-        +provideConnection() Connection
-    }
-    class Main {
-        +main(args: String[]) void
-    }
-    class TelephonyService {
-        -String serviceName
-        +TelephonyService(serviceName: String)
-        +startCall(callId: String) boolean
-        +endCall(callId: String) boolean
-        +getServiceName() String
-    }
-    class CallRecording {
-        -String recordingId
-        -int duration
-        -LocalDateTime createdAt
-        +CallRecording(recordingId: String, duration: int, createdAt: LocalDateTime)
-        +CallRecording(recordingId: String, duration: Object, createdAt: String)
-        +listen() String
-        +getRecordingId() String
-        +getDuration() int
-        +getCreatedAt() LocalDateTime
-    }
-    class QualityEvaluation {
-        -String evaluationId
-        -int score
-        -String feedback
-        +QualityEvaluation(evaluationId: String, score: int, feedback: String)
-        +getResult() String
-        +getEvaluationId() String
-        +getScore() int
-        +getFeedback() String
-    }
-    class ConversationSummary {
-        -String summaryId
-        -String content
-        -LocalDateTime preparedAt
-        +ConversationSummary(summaryId: String, content: String, preparedAt: LocalDateTime)
-        +getContent() String
-        +getSummaryId() String
-        +getPreparedAt() LocalDateTime
-    }
-    class EmailService {
-        -String serviceName
-        +EmailService(serviceName: String)
-        +sendSummary(client: Client, summary: ConversationSummary) boolean
-        +getServiceName() String
-    }
+
     CallCenterParticipant <|-- Client
     CallCenterParticipant <|-- Operator
     CallCenterParticipant <|-- Supervisor
     ConversationScript <|.. StandardConversationScript
     Operator ..> ConversationScript : uses
-    Call ..> TelephonyService : injected instance
+    Call ..> TelephonyService : injected
     Call *-- "0..*" CallRecording : owns
     Call --> RecordingStore : constructor injection
-    RecordingStore <|.. SqliteRecordingStore
-    CallCenterController --> Call : coordinates
-    JavalinWebServer --> CallCenterController : passes requests
-    JavalinWebServer --> CallCenterWebView : serializes response
-    CallCenterController --> CallCenterWebView : result
-    WebServer <|.. JavalinWebServer
-    CallCenterModule --> WebServer : binds
-    CallCenterModule --> RecordingStore : binds
-    CallCenterModule --> SqliteRecordingStore : binds implementation
-    Main --> CallCenterModule : creates
+    Call ..> CallCenterOperationResult : returns
     Call "1" --> "0..1" QualityEvaluation : stores
     Call "1" --> "0..1" ConversationSummary : stores
     Client "1" --> "0..*" Call : requests
@@ -217,9 +239,21 @@ classDiagram
     EmailService ..> Client : delivers to
     EmailService ..> ConversationSummary : sends
 
-    note for CallCenterParticipant "getParticipantId() є final; getDisplayName() визначається спеціалізаціями"
-    note for Client "getDisplayName() перевизначено; requestCallback() перевантажено для двох сигнатур"
-    note for Operator "getDisplayName() перевизначено"
-    note for Supervisor "getDisplayName() перевизначено"
-    note for TelephonyService "Симуляція телефонії; зовнішніх викликів немає"
-    note for EmailService "Симуляція електронної пошти; успіх лише після підтвердження"
+    RecordingStore <|.. SqliteRecordingStore
+    WebServer <|.. JavalinWebServer
+    WebPage ..> JavalinWebServer : HTTP / JSON
+    JavalinWebServer ..> CallCenterController : маршрути
+    JavalinWebServer ..> CallCenterWebView : готує відповідь
+    CallCenterController --> Call : координує
+    CallCenterController ..> CallRecording : створює
+    CallCenterController ..> CallCenterOperationResult : повертає
+    CallCenterWebView ..> CallCenterOperationResult : читає
+    CallCenterWebView ..> HttpResult : створює
+    CallCenterModule ..> WebServer : прив'язує
+    CallCenterModule ..> JavalinWebServer : реалізація
+    CallCenterModule ..> RecordingStore : прив'язує
+    CallCenterModule ..> SqliteRecordingStore : реалізація
+    Main ..> CallCenterModule : створює Injector
+    Main ..> WebServer : запускає
+    Main ..> CallCenterController : створює
+    Main ..> CallCenterWebView : створює

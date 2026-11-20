@@ -37,7 +37,7 @@ IWebServer -- [JavalinWebServer]
 [CallCenterModule] ..> [JavalinWebServer] : прив'язує
 [CallCenterModule] ..> [SqliteRecordingStore] : прив'язує
 
-[CallCenterController] --> [CallCenterWebView] : готує відповідь
+[JavalinWebServer] --> [CallCenterWebView] : готує відповідь
 [CallCenterController] --> [Call] : читання / зміна
 
 [Call] ..> IRecordingStore : використовує
