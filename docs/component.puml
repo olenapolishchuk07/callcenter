@@ -1,0 +1,47 @@
+@startuml
+actor "Користувач" as User
+[Main]
+node "Вебсервер Jetty" as Jetty
+database "База даних SQLite\n(target/callcenter.db)" as SQLite
+
+package "view" {
+  component "Вебсторінка\nindex.html, script.js, style.css" as WebPage
+  [CallCenterWebView]
+}
+
+package "controller" {
+  [CallCenterController]
+}
+
+package "infrastructure" {
+  () "WebServer" as IWebServer
+  [JavalinWebServer]
+  [CallCenterModule]
+  [SqliteRecordingStore]
+}
+
+package "model" {
+  [Call]
+  [CallRecording]
+  () "RecordingStore" as IRecordingStore
+}
+
+User --> WebPage : дії користувача
+WebPage --> Jetty : HTTP-запити, JSON
+
+[Main] ..> IWebServer : запускає
+IWebServer -- [JavalinWebServer]
+[JavalinWebServer] --> Jetty : запускає
+[JavalinWebServer] --> [CallCenterController] : маршрути
+
+[CallCenterModule] ..> [JavalinWebServer] : прив'язує
+[CallCenterModule] ..> [SqliteRecordingStore] : прив'язує
+
+[CallCenterController] --> [CallCenterWebView] : готує відповідь
+[CallCenterController] --> [Call] : читання / зміна
+
+[Call] ..> IRecordingStore : використовує
+[Call] *-- [CallRecording]
+IRecordingStore -- [SqliteRecordingStore]
+[SqliteRecordingStore] --> SQLite : SQL-запити
+@enduml

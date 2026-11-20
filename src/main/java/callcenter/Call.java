@@ -3,6 +3,8 @@ package callcenter;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Call {
     private final String callId;
@@ -11,6 +13,7 @@ public class Call {
     private final TelephonyService telephonyService;
     private String state = "NewRequest";
     private CallRecording recording;
+    private final List<CallRecording> recordings = new ArrayList<>();
     private QualityEvaluation qualityEvaluation;
     private ConversationSummary summary;
     private final RecordingStore recordingStore;
@@ -66,7 +69,7 @@ public class Call {
         }
         recording = new CallRecording(callId + "-REC", 120, LocalDateTime.now());
         if (recordingStore != null) {
-            recordingStore.save(recording);
+            recordingStore.insert(recording);
         }
         state = "Recorded";
         return recording;
@@ -103,6 +106,116 @@ public class Call {
 
     public String getCallId() {
         return callId;
+    }
+
+    public List<CallRecording> getRecordings() {
+        if (recordingStore == null) {
+            return new ArrayList<>(recordings);
+        }
+        List<CallRecording> stored = recordingStore.findAll();
+        recordings.clear();
+        recordings.addAll(stored);
+        return new ArrayList<>(recordings);
+    }
+
+    public CallCenterOperationResult findAllRecordings() {
+        try {
+            return CallCenterOperationResult.success("Записи прочитано.", getRecordings());
+        } catch (IllegalStateException exception) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.STORAGE_ERROR, "Не вдалося прочитати записи зі сховища.");
+        }
+    }
+
+    private boolean changesForbidden() {
+        if (!operator.isAvailable()) {
+            return true;
+        }
+        return "RequestRejected".equals(state) || "CallFailed".equals(state)
+                || "QualityEvaluated".equals(state) || "SummarySent".equals(state);
+    }
+
+    public CallCenterOperationResult addRecording(CallRecording recording) {
+        if (recording == null) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.INVALID, "Дані запису є некоректними.");
+        }
+        if (changesForbidden()) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.CONFLICT, "Зміну записів заборонено поточним станом дзвінка.");
+        }
+        try {
+            if (recordingStore.findById(recording.getRecordingId()) != null) {
+                return CallCenterOperationResult.failure(
+                        CallCenterOperationResult.Type.CONFLICT, "Запис із таким recordingId вже існує.");
+            }
+            recordingStore.insert(recording);
+            getRecordings();
+            return CallCenterOperationResult.success("Запис успішно додано.", recording);
+        } catch (IllegalArgumentException exception) {
+            if (exception.getMessage().contains("вже існує")) {
+                return CallCenterOperationResult.failure(
+                        CallCenterOperationResult.Type.CONFLICT, "Запис із таким recordingId вже існує.");
+            }
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.INVALID, exception.getMessage());
+        } catch (IllegalStateException exception) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.STORAGE_ERROR,
+                    "Не вдалося зберегти запис через помилку сховища.");
+        }
+    }
+
+    public CallCenterOperationResult updateRecording(String recordingId, CallRecording recording) {
+        if (recording == null || recordingId == null
+                || !recordingId.trim().equals(recording.getRecordingId())) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.INVALID,
+                    "Ідентифікатор запису в тілі й адресі має збігатися.");
+        }
+        if (changesForbidden()) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.CONFLICT, "Зміну записів заборонено поточним станом дзвінка.");
+        }
+        try {
+            if (recordingStore.findById(recordingId) == null) {
+                return CallCenterOperationResult.failure(
+                        CallCenterOperationResult.Type.NOT_FOUND, "Запис не знайдено.");
+            }
+            recordingStore.update(recording);
+            getRecordings();
+            return CallCenterOperationResult.success("Запис успішно виправлено.", recording);
+        } catch (IllegalArgumentException exception) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.INVALID, exception.getMessage());
+        } catch (IllegalStateException exception) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.STORAGE_ERROR,
+                    "Не вдалося оновити запис через помилку сховища.");
+        }
+    }
+
+    public CallCenterOperationResult deleteRecording(String recordingId) {
+        if (recordingId == null || recordingId.trim().isEmpty()) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.INVALID, "Ідентифікатор запису є обов'язковим.");
+        }
+        if (changesForbidden()) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.CONFLICT, "Зміну записів заборонено поточним станом дзвінка.");
+        }
+        try {
+            if (!recordingStore.delete(recordingId)) {
+                return CallCenterOperationResult.failure(
+                        CallCenterOperationResult.Type.NOT_FOUND, "Запис не знайдено.");
+            }
+            getRecordings();
+            return CallCenterOperationResult.success("Запис успішно видалено.");
+        } catch (IllegalStateException exception) {
+            return CallCenterOperationResult.failure(
+                    CallCenterOperationResult.Type.STORAGE_ERROR,
+                    "Не вдалося видалити запис через помилку сховища.");
+        }
     }
 
     public String getState() {

@@ -1,6 +1,25 @@
 classDiagram
     direction LR
 
+    box model
+        class Call
+        class CallRecording
+        class RecordingStore
+        class SqliteRecordingStore
+    end
+    box view
+        class CallCenterWebView
+    end
+    box controller
+        class CallCenterController
+    end
+    box infrastructure
+        class WebServer
+        class JavalinWebServer
+        class CallCenterModule
+        class Main
+    end
+
     class CallCenterParticipant {
         <<abstract>>
         -String participantId
@@ -78,14 +97,20 @@ classDiagram
     }
     class RecordingStore {
         <<interface>>
-        +save(recording: CallRecording) void
         +findAll() List~CallRecording~
+        +findById(recordingId: String) CallRecording
+        +insert(recording: CallRecording) void
+        +update(recording: CallRecording) void
+        +delete(recordingId: String) boolean
     }
     class SqliteRecordingStore {
         -Connection connection
         +SqliteRecordingStore(connection: Connection)
-        +save(recording: CallRecording) void
         +findAll() List~CallRecording~
+        +findById(recordingId: String) CallRecording
+        +insert(recording: CallRecording) void
+        +update(recording: CallRecording) void
+        +delete(recordingId: String) boolean
     }
     class CallCenterModule {
         <<AbstractModule>>
@@ -152,7 +177,7 @@ classDiagram
     ConversationScript <|.. StandardConversationScript
     Operator ..> ConversationScript : uses
     Call ..> TelephonyService : injected instance
-    Call *-- "0..1" CallRecording : owns
+    Call *-- "0..*" CallRecording : owns
     Call --> RecordingStore : constructor injection
     RecordingStore <|.. SqliteRecordingStore
     CallCenterModule --> RecordingStore : binds

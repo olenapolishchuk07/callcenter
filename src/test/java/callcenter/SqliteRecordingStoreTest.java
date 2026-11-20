@@ -32,10 +32,10 @@ class SqliteRecordingStoreTest {
     }
 
     @Test
-    void upsertUpdatesWithoutDuplicates() {
+    void insertAndUpdateWithoutDuplicates() {
         LocalDateTime firstTime = LocalDateTime.of(2026, 11, 19, 20, 4);
-        store.save(new CallRecording("REC-1", 120, firstTime));
-        store.save(new CallRecording("REC-1", 180,
+        store.insert(new CallRecording("REC-1", 120, firstTime));
+        store.update(new CallRecording("REC-1", 180,
                 firstTime.plusHours(1)));
 
         List<CallRecording> recordings = store.findAll();
@@ -59,7 +59,7 @@ class SqliteRecordingStoreTest {
     void reportsUkrainianSqliteSaveError() throws Exception {
         connection.close();
         assertThrows(IllegalStateException.class,
-                () -> store.save(new CallRecording("REC-ERR", 1, LocalDateTime.now())),
+                () -> store.insert(new CallRecording("REC-ERR", 1, LocalDateTime.now())),
                 "Помилка збереження даних у SQLite:");
     }
 

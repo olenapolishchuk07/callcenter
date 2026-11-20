@@ -1,7 +1,5 @@
 package callcenter;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
@@ -117,9 +115,7 @@ public class CallLifecycleChecks {
 
     private static Call createCall(String callId, Client client, Operator operator,
             TelephonyService telephony) {
-        Injector injector = Guice.createInjector(
-                new CallCenterModule(callId, client, operator, telephony));
-        return injector.getInstance(Call.class);
+        return new Call(callId, client, operator, telephony, null);
     }
 
     private static void require(boolean condition, String message) {

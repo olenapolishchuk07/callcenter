@@ -1,71 +1,48 @@
 sequenceDiagram
     autonumber
-    actor Client as Клієнт
-    participant Main
-    participant Call
-    participant Operator as Оператор
-    participant TelephonyService
-    participant ConversationScript as StandardConversationScript
-    participant CallRecording
-    participant Supervisor as Супервізор
-    participant QualityEvaluation
-    participant ConversationSummary
-    participant EmailService
-    participant CallCenterModule
-    participant Injector
-    participant RecordingStore
-    participant SqliteRecordingStore
-    participant HtmlReportGenerator
+    actor Користувач
+    participant Сторінка
+    participant JavalinWebServer as Javalin адаптер
+    participant CallCenterController as Контролер
+    participant Call as Модель
+    participant RecordingStore as Сховище
+    participant SQLite
 
-    Main->>CallCenterModule: налаштувати прив'язки та JDBC-з'єднання
-    CallCenterModule->>RecordingStore: прив'язати RecordingStore
-    CallCenterModule->>SqliteRecordingStore: прив'язати реалізацію
-    Main->>Injector: Guice.createInjector(CallCenterModule)
-    Main->>Injector: injector.getInstance(Call)
-    Injector->>Call: constructor injection RecordingStore
-    Call-->>Main: отриманий Guice-екземпляр
+    Користувач->>Сторінка: GET /
+    Сторінка->>JavalinWebServer: Завантажити статичні ресурси
+    JavalinWebServer-->>Сторінка: index.html, script.js, style.css
+    Сторінка->>JavalinWebServer: GET /api/CallCenter
+    JavalinWebServer->>CallCenterController: readAll()
+    CallCenterController->>Call: findAllRecordings()
+    Call->>RecordingStore: findAll()
+    RecordingStore->>SQLite: SELECT
+    SQLite-->>RecordingStore: записи
+    RecordingStore-->>Call: List~CallRecording~
+    Call-->>CallCenterController: OperationResult
+    CallCenterController-->>JavalinWebServer: OperationResult
+    JavalinWebServer-->>Сторінка: 200, JSON-масив
 
-    Client->>Call: requestCallback(callId, бажаний час, Operator, TelephonyService)
-    Call->>Operator: перевірити доступність і призначити дзвінок
-    alt Оператор доступний
-        Operator-->>Call: підтвердити призначення
-        Call->>TelephonyService: startCall(callId) — симуляція
-        TelephonyService-->>Call: дзвінок розпочато
-        Call->>Operator: розпочати обробку
-        loop Для кожного кроку сценарію
-            Operator->>ConversationScript: executeStep(stepNumber)
-            ConversationScript-->>Operator: текст наступного кроку
-        end
-        Operator->>TelephonyService: endCall(callId) — симуляція
-        TelephonyService-->>Call: дзвінок завершено
-        Call->>CallRecording: створити запис завершеної розмови
-        CallRecording-->>Call: збережений CallRecording
-        Note over Call,CallRecording: Recorded встановлюється лише після завершення дзвінка та збереження запису.
-        Call-->>Client: повідомити про завершення розмови
+    Користувач->>Сторінка: Створити або виправити
+    Сторінка->>JavalinWebServer: POST або PUT з JSON
+    JavalinWebServer->>CallCenterController: create/update(values)
+    CallCenterController->>Call: addRecording/updateRecording
+    Call->>Call: перевірити стан і дані
+    Call->>RecordingStore: insert/update/findById
+    RecordingStore->>SQLite: INSERT або UPDATE
+    SQLite-->>RecordingStore: результат
+    RecordingStore-->>Call: результат
+    Call-->>CallCenterController: OperationResult
+    CallCenterController-->>JavalinWebServer: OperationResult
+    JavalinWebServer-->>Сторінка: 201/200 або 400/409/500
+    Сторінка->>JavalinWebServer: Повторити GET
 
-        Supervisor->>CallRecording: отримати доступ і прослухати запис
-        alt Запис доступний
-            CallRecording-->>Supervisor: аудіозапис для оцінювання
-            Supervisor->>QualityEvaluation: оцінити запис і створити результат
-            QualityEvaluation-->>Supervisor: завершена оцінка
-            Supervisor->>Call: зберегти QualityEvaluation
-            Note over Call,QualityEvaluation: QualityEvaluated можливий лише після доступу до запису та збереження оцінки.
-            Call->>ConversationSummary: підготувати підсумок розмови
-            ConversationSummary-->>Call: готовий підсумок
-            Call->>EmailService: sendSummary(Client, ConversationSummary) — симуляція
-            alt Надсилання підтверджене
-                EmailService-->>Client: симульоване підтвердження доставки
-                Note over Call,EmailService: SummarySent встановлюється лише за наявності підсумку та підтвердження.
-            else Надсилання не підтверджене
-                EmailService-->>Call: помилка або відсутнє підтвердження
-                Call->>Call: confirmSummarySent(false)
-                Note over Call: Перехід до SummaryFailed, процес завершується.
-            end
-        else Запис недоступний
-            CallRecording-->>Supervisor: відмовити в доступі
-            Note over Supervisor,Call: Оцінку не створено, QualityEvaluated не встановлюється.
-        end
-    else Оператор недоступний
-        Operator-->>Call: відхилити призначення
-        Note over Client,Call: Дзвінок не розпочато, Recorded не встановлюється.
-    end
+    Користувач->>Сторінка: Підтвердити видалення
+    Сторінка->>JavalinWebServer: DELETE /api/CallCenter/{id}
+    JavalinWebServer->>CallCenterController: delete(id)
+    CallCenterController->>Call: deleteRecording(id)
+    Call->>RecordingStore: delete(id)
+    RecordingStore->>SQLite: DELETE
+    SQLite-->>RecordingStore: змінені рядки
+    RecordingStore-->>Call: результат
+    Call-->>JavalinWebServer: OperationResult
+    JavalinWebServer-->>Сторінка: 200 або 404/409/500

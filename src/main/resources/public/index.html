@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Записи дзвінків — Call Center</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="container">
+    <header>
+        <p class="eyebrow">Call Center</p>
+        <h1>Записи дзвінків</h1>
+    </header>
+
+    <section class="panel" aria-labelledby="records-title">
+        <h2 id="records-title">Наявні записи</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr><th>recordingId</th><th>duration</th><th>createdAt</th><th>Дії</th></tr>
+                </thead>
+                <tbody id="recordings"></tbody>
+            </table>
+        </div>
+        <p id="empty-state" class="empty-state" hidden>Записи відсутні.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="form-title">
+        <h2 id="form-title">Додати або виправити запис</h2>
+        <form id="recording-form">
+            <label for="recordingId">recordingId</label>
+            <input id="recordingId" name="recordingId" autocomplete="off" required>
+            <label for="duration">duration</label>
+            <input id="duration" name="duration" type="number" min="0" required>
+            <label for="createdAt">createdAt</label>
+            <input id="createdAt" name="createdAt" type="datetime-local" required>
+            <div class="form-actions">
+                <button id="submit-button" type="submit" class="button primary">Зберегти запис</button>
+                <button id="cancel-button" type="button" class="button secondary" hidden>Скасувати редагування</button>
+            </div>
+        </form>
+        <p id="message" class="message" role="status" hidden></p>
+    </section>
+</main>
+<script src="/script.js"></script>
+</body>
+</html>

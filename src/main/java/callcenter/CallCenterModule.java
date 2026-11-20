@@ -24,6 +24,7 @@ public class CallCenterModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(RecordingStore.class).to(SqliteRecordingStore.class).in(Singleton.class);
+        bind(WebServer.class).to(JavalinWebServer.class).in(Singleton.class);
         bind(String.class).annotatedWith(com.google.inject.name.Names.named("callId")).toInstance(callId);
         bind(Client.class).toInstance(client);
         bind(Operator.class).toInstance(operator);
