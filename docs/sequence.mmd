@@ -2,70 +2,140 @@ sequenceDiagram
     autonumber
     actor Client as Клієнт
     participant Main
-    participant Call
     participant Operator as Оператор
+    participant Supervisor as Супервізор
+    participant CallCenterModule as Guice-модуль
+    participant Injector
+    participant Call
     participant TelephonyService
     participant ConversationScript as StandardConversationScript
     participant CallRecording
-    participant Supervisor as Супервізор
     participant QualityEvaluation
     participant ConversationSummary
     participant EmailService
-    participant CallCenterModule
-    participant Injector
     participant RecordingStore
     participant SqliteRecordingStore
+    participant Connection
     participant HtmlReportGenerator
 
-    Main->>CallCenterModule: налаштувати прив'язки та JDBC-з'єднання
-    CallCenterModule->>RecordingStore: прив'язати RecordingStore
-    CallCenterModule->>SqliteRecordingStore: прив'язати реалізацію
-    Main->>Injector: Guice.createInjector(CallCenterModule)
-    Main->>Injector: injector.getInstance(Call)
-    Injector->>Call: constructor injection RecordingStore
-    Call-->>Main: отриманий Guice-екземпляр
+    Main->>Main: ConsoleEncoding.configureUtf8()
+    Main->>Client: new Client(participantId, displayName, email, phoneNumber)
+    Main->>Operator: new Operator(participantId, displayName, operatorStatus)
+    Main->>Supervisor: new Supervisor(participantId, displayName, supervisorCode)
+    Main->>TelephonyService: new TelephonyService(serviceName)
+    Main->>EmailService: new EmailService(serviceName)
+    Main->>ConversationScript: new StandardConversationScript(scriptName, steps)
+    Note over Main,ConversationScript: steps — три рядки з Arrays.asList(...).
 
-    Client->>Call: requestCallback(callId, бажаний час, Operator, TelephonyService)
-    Call->>Operator: перевірити доступність і призначити дзвінок
-    alt Оператор доступний
-        Operator-->>Call: підтвердити призначення
-        Call->>TelephonyService: startCall(callId) — симуляція
-        TelephonyService-->>Call: дзвінок розпочато
-        Call->>Operator: розпочати обробку
-        loop Для кожного кроку сценарію
-            Operator->>ConversationScript: executeStep(stepNumber)
-            ConversationScript-->>Operator: текст наступного кроку
-        end
-        Operator->>TelephonyService: endCall(callId) — симуляція
-        TelephonyService-->>Call: дзвінок завершено
-        Call->>CallRecording: створити запис завершеної розмови
-        CallRecording-->>Call: збережений CallRecording
-        Note over Call,CallRecording: Recorded встановлюється лише після завершення дзвінка та збереження запису.
-        Call-->>Client: повідомити про завершення розмови
+    Main->>CallCenterModule: new CallCenterModule("CALL-001", client, operator, telephony)
+    Main->>Injector: Guice.createInjector(module)
+    Injector->>CallCenterModule: configure()
+    CallCenterModule->>Injector: bind(RecordingStore).to(SqliteRecordingStore).in(Singleton)
+    CallCenterModule->>Injector: bind(@Named("callId"), "CALL-001")
+    CallCenterModule->>Injector: bindInstance(Client, client)
+    CallCenterModule->>Injector: bindInstance(Operator, operator)
+    CallCenterModule->>Injector: bindInstance(TelephonyService, telephony)
+    Injector-->>Main: injector
+    Note over Main,Injector: Main обробляє виняток лише під час Guice.createInjector(module).
 
-        Supervisor->>CallRecording: отримати доступ і прослухати запис
-        alt Запис доступний
-            CallRecording-->>Supervisor: аудіозапис для оцінювання
-            Supervisor->>QualityEvaluation: оцінити запис і створити результат
-            QualityEvaluation-->>Supervisor: завершена оцінка
-            Supervisor->>Call: зберегти QualityEvaluation
-            Note over Call,QualityEvaluation: QualityEvaluated можливий лише після доступу до запису та збереження оцінки.
-            Call->>ConversationSummary: підготувати підсумок розмови
-            ConversationSummary-->>Call: готовий підсумок
-            Call->>EmailService: sendSummary(Client, ConversationSummary) — симуляція
-            alt Надсилання підтверджене
-                EmailService-->>Client: симульоване підтвердження доставки
-                Note over Call,EmailService: SummarySent встановлюється лише за наявності підсумку та підтвердження.
-            else Надсилання не підтверджене
-                EmailService-->>Call: помилка або відсутнє підтвердження
-                Call->>Call: confirmSummarySent(false)
-                Note over Call: Перехід до SummaryFailed, процес завершується.
-            end
-        else Запис недоступний
-            CallRecording-->>Supervisor: відмовити в доступі
-            Note over Supervisor,Call: Оцінку не створено, QualityEvaluated не встановлюється.
-        end
-    else Оператор недоступний
-        Operator-->>Call: відхилити призначення
-        Note over Client,Call: Дзвінок не розпочато, Recorded не встановлюється.
+    Main->>Injector: getInstance(Call.class)
+    Injector->>CallCenterModule: provideConnection()
+    CallCenterModule->>CallCenterModule: Files.createDirectories(Path.of("target"))
+    CallCenterModule->>Connection: DriverManager.getConnection("jdbc:sqlite:target/callcenter.db")
+    Connection-->>CallCenterModule: JDBC Connection
+    CallCenterModule-->>Injector: Connection (@Provides, @Singleton)
+    Injector->>SqliteRecordingStore: new SqliteRecordingStore(connection)
+    SqliteRecordingStore->>SqliteRecordingStore: ensureSchema()
+    SqliteRecordingStore->>Connection: createStatement(); execute(CREATE TABLE IF NOT EXISTS call_recordings)
+    Connection-->>SqliteRecordingStore: схема готова
+    SqliteRecordingStore-->>Injector: Singleton RecordingStore
+    Injector->>Call: @Inject Call("CALL-001", client, operator, telephony, recordingStore)
+    Note over Injector,Call: callId передано через @Named("callId"); інші залежності — Guice bindings.
+    Note over Main,CallCenterModule: Помилка підключення під час getInstance(Call.class) виходить за межі catch навколо createInjector.
+    Call-->>Injector: Call
+    Injector-->>Main: call
+
+    Main->>Client: requestCallback("CALL-001", "сьогодні", call)
+    Client->>Client: startRequest(call, "сьогодні")
+    alt Контактні дані email і phoneNumber є (у Main так)
+        Client-->>Main: call; надрукувати заявку на зворотний дзвінок
+    else Відсутні контактні дані
+        Client->>Call: rejectRequest()
+        Call-->>Client: стан RequestRejected
+        Client-->>Main: call
     end
+    Main->>Call: getState()
+    Call-->>Main: стан дзвінка
+
+    Main->>Operator: handleCall(call, script)
+    Operator->>Call: start()
+    Call->>Operator: isAvailable()
+    Operator-->>Call: true для "Доступний"
+    Call->>TelephonyService: startCall("CALL-001")
+    TelephonyService-->>Call: true
+    Call-->>Operator: true; стан CallInProgress
+    loop step = 1..script.getStepCount()
+        Operator->>ConversationScript: getStepCount()
+        ConversationScript-->>Operator: кількість кроків
+        Operator->>ConversationScript: executeStep(step)
+        ConversationScript-->>Operator: текст кроку
+        Operator->>Operator: надрукувати виконаний крок
+    end
+    Operator->>Call: completeAndRecord()
+    Call->>TelephonyService: endCall("CALL-001")
+    TelephonyService-->>Call: true
+    Call->>CallRecording: new CallRecording("CALL-001-REC", 120, LocalDateTime.now())
+    CallRecording-->>Call: recording
+    Call->>RecordingStore: save(recording)
+    RecordingStore->>SqliteRecordingStore: save(recording)
+    SqliteRecordingStore->>Connection: INSERT ... ON CONFLICT(recordingId) DO UPDATE
+    Connection-->>SqliteRecordingStore: запис збережено
+    SqliteRecordingStore-->>RecordingStore: void
+    RecordingStore-->>Call: void
+    Call-->>Operator: recording; стан Recorded
+    Operator-->>Main: handleCall завершено
+    Note over Main,Operator: Якщо handleCall кидає IllegalStateException, Main друкує повідомлення й завершується.
+
+    Main->>Call: getRecording()
+    Call-->>Main: recording
+    Main->>Supervisor: evaluate(recording, call)
+    Supervisor->>Call: getState()
+    Call-->>Supervisor: Recorded
+    Supervisor->>Call: getRecording()
+    Call-->>Supervisor: той самий recording
+    Supervisor->>CallRecording: listen()
+    CallRecording-->>Supervisor: опис запису для оцінювання
+    Supervisor->>QualityEvaluation: new QualityEvaluation("CALL-001-EVAL", 95, feedback)
+    QualityEvaluation-->>Supervisor: evaluation
+    Supervisor->>Call: saveEvaluation(evaluation)
+    Call-->>Supervisor: стан QualityEvaluated
+    Supervisor-->>Main: evaluation
+
+    Main->>Call: getState()
+    Call-->>Main: QualityEvaluated
+    Main->>ConversationSummary: new ConversationSummary(callId + "-SUMMARY", content, LocalDateTime.now())
+    ConversationSummary-->>Main: summary
+    Main->>Call: saveSummary(summary)
+    Call-->>Main: summary збережено
+    Main->>EmailService: sendSummary(client, summary)
+    EmailService->>Client: receiveSummary(summary)
+    Client-->>EmailService: void
+    EmailService-->>Main: true
+    Main->>Call: confirmSummarySent(sent)
+    Call-->>Main: стан SummarySent
+
+    Main->>Injector: getInstance(RecordingStore.class)
+    Injector-->>Main: той самий Singleton RecordingStore
+    Main->>RecordingStore: findAll()
+    RecordingStore->>SqliteRecordingStore: findAll()
+    SqliteRecordingStore->>Connection: SELECT recordingId, duration, createdAt ... ORDER BY recordingId
+    Connection-->>SqliteRecordingStore: рядки записів
+    SqliteRecordingStore->>CallRecording: new CallRecording(recordingId, duration, createdAt) для кожного рядка
+    CallRecording-->>SqliteRecordingStore: recordings
+    SqliteRecordingStore-->>RecordingStore: список CallRecording
+    RecordingStore-->>Main: recordings
+    Main->>HtmlReportGenerator: new HtmlReportGenerator()
+    Main->>HtmlReportGenerator: generate(recordings)
+    HtmlReportGenerator->>HtmlReportGenerator: escape(recordingId, createdAt)
+    HtmlReportGenerator-->>Main: записати target/callcenter-report.html
+    Note over Main,HtmlReportGenerator: Main перехоплює IllegalStateException у блоці звіту; потім повідомляє про успіх сценарію.

@@ -3,175 +3,207 @@ classDiagram
 
     class CallCenterParticipant {
         <<abstract>>
-        -String participantId
-        #String displayName
+        -participantId: String
+        #displayName: String
         #CallCenterParticipant(participantId: String, displayName: String)
-        +getParticipantId() String
-        +getDisplayName() String
+        +getParticipantId(): String
+        +getDisplayName(): String
     }
     class Client {
-        -String email
-        -String phoneNumber
+        -email: String
+        -phoneNumber: String
         +Client(participantId: String, displayName: String, email: String, phoneNumber: String)
-        +getDisplayName() String
-        +getEmail() String
-        +getPhoneNumber() String
-        +requestCallback(callId: String, operator: Operator, telephonyService: TelephonyService) Call
-        +requestCallback(callId: String, preferredTime: String, operator: Operator, telephonyService: TelephonyService) Call
-        +receiveSummary(summary: ConversationSummary) void
+        +getDisplayName(): String
+        +requestCallback(callId: String, preferredTime: String, injectedCall: Call): Call
+        -startRequest(call: Call, preferredTime: String): Call
+        +receiveSummary(summary: ConversationSummary): void
+        +getEmail(): String
+        +getPhoneNumber(): String
+        -hasContactDetails(): boolean
     }
     class Operator {
-        -String operatorStatus
+        -operatorStatus: String
         +Operator(participantId: String, displayName: String, operatorStatus: String)
-        +getDisplayName() String
-        +handleCall(call: Call, script: ConversationScript) void
-        +isAvailable() boolean
-        +getOperatorStatus() String
+        +getDisplayName(): String
+        +handleCall(call: Call, script: ConversationScript): void
+        +isAvailable(): boolean
+        +getOperatorStatus(): String
     }
     class Supervisor {
-        -String supervisorCode
+        -supervisorCode: String
         +Supervisor(participantId: String, displayName: String, supervisorCode: String)
-        +getDisplayName() String
-        +evaluate(recording: CallRecording, call: Call) QualityEvaluation
-        +getSupervisorCode() String
+        +getDisplayName(): String
+        +evaluate(recording: CallRecording, call: Call): QualityEvaluation
+        +getSupervisorCode(): String
     }
     class ConversationScript {
         <<interface>>
-        +executeStep(stepNumber: int) String
-        +getStepCount() int
-        +getScriptName() String
+        +executeStep(stepNumber: int): String
+        +getStepCount(): int
+        +getScriptName(): String
     }
     class StandardConversationScript {
-        -String scriptName
-        -List~String~ steps
+        -scriptName: String
+        -steps: List~String~
         +StandardConversationScript(scriptName: String, steps: List~String~)
-        +getScriptName() String
-        +executeStep(stepNumber: int) String
-        +getStepCount() int
+        +executeStep(stepNumber: int): String
+        +getStepCount(): int
+        +getScriptName(): String
     }
     class Call {
-        -String callId
-        -Client client
-        -Operator operator
-        -String state
-        -TelephonyService telephonyService
-        -CallRecording recording
-        -RecordingStore recordingStore
-        -QualityEvaluation qualityEvaluation
-        -ConversationSummary summary
+        -callId: String
+        -client: Client
+        -operator: Operator
+        -telephonyService: TelephonyService
+        -state: String
+        -recording: CallRecording
+        -qualityEvaluation: QualityEvaluation
+        -summary: ConversationSummary
+        -recordingStore: RecordingStore
         +Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService)
-        +@Inject Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService, recordingStore: RecordingStore)
-        +rejectRequest() void
-        +start() boolean
-        +completeAndRecord() CallRecording
-        +saveEvaluation(evaluation: QualityEvaluation) void
-        +failEvaluation() void
-        +saveSummary(summary: ConversationSummary) void
-        +confirmSummarySent(success: boolean) void
-        +getCallId() String
-        +getState() String
-        +getClient() Client
-        +getOperator() Operator
-        +getRecording() CallRecording
-        +getQualityEvaluation() QualityEvaluation
-        +getSummary() ConversationSummary
+        +Call(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService, recordingStore: RecordingStore)
+        +start(): boolean
+        +rejectRequest(): void
+        +completeAndRecord(): CallRecording
+        +saveEvaluation(evaluation: QualityEvaluation): void
+        +failEvaluation(): void
+        +saveSummary(summary: ConversationSummary): void
+        +confirmSummarySent(success: boolean): void
+        +getCallId(): String
+        +getState(): String
+        +getClient(): Client
+        +getOperator(): Operator
+        +getRecording(): CallRecording
+        +getQualityEvaluation(): QualityEvaluation
+        +getSummary(): ConversationSummary
     }
     class RecordingStore {
         <<interface>>
-        +save(recording: CallRecording) void
-        +findAll() List~CallRecording~
+        +save(recording: CallRecording): void
+        +findAll(): List~CallRecording~
     }
     class SqliteRecordingStore {
-        -Connection connection
+        -connection: Connection
         +SqliteRecordingStore(connection: Connection)
-        +save(recording: CallRecording) void
-        +findAll() List~CallRecording~
+        -ensureSchema(): void
+        +save(recording: CallRecording): void
+        +findAll(): List~CallRecording~
     }
     class CallCenterModule {
         <<AbstractModule>>
-        +configure() void
-        +provideConnection() Connection
+        -callId: String
+        -client: Client
+        -operator: Operator
+        -telephonyService: TelephonyService
+        +CallCenterModule(callId: String, client: Client, operator: Operator, telephonyService: TelephonyService)
+        #configure(): void
+        ~provideConnection(): Connection
     }
     class HtmlReportGenerator {
-        +generate(recordings: List~CallRecording~) void
+        +generate(recordings: List~CallRecording~): void
+        +escape(value: String): String$
     }
     class Main {
-        +main(args: String[]) void
+        +main(args: String[]): void$
     }
     class TelephonyService {
-        -String serviceName
+        -serviceName: String
         +TelephonyService(serviceName: String)
-        +startCall(callId: String) boolean
-        +endCall(callId: String) boolean
-        +getServiceName() String
+        +startCall(callId: String): boolean
+        +endCall(callId: String): boolean
+        +getServiceName(): String
     }
     class CallRecording {
-        -String recordingId
-        -int duration
-        -LocalDateTime createdAt
+        -recordingId: String
+        -duration: int
+        -createdAt: LocalDateTime
         +CallRecording(recordingId: String, duration: int, createdAt: LocalDateTime)
-        +listen() String
-        +getRecordingId() String
-        +getDuration() int
-        +getCreatedAt() LocalDateTime
+        +listen(): String
+        +getRecordingId(): String
+        +getDuration(): int
+        +getCreatedAt(): LocalDateTime
     }
     class QualityEvaluation {
-        -String evaluationId
-        -int score
-        -String feedback
+        -evaluationId: String
+        -score: int
+        -feedback: String
         +QualityEvaluation(evaluationId: String, score: int, feedback: String)
-        +getResult() String
-        +getEvaluationId() String
-        +getScore() int
-        +getFeedback() String
+        +getResult(): String
+        +getEvaluationId(): String
+        +getScore(): int
+        +getFeedback(): String
     }
     class ConversationSummary {
-        -String summaryId
-        -String content
-        -LocalDateTime preparedAt
+        -summaryId: String
+        -content: String
+        -preparedAt: LocalDateTime
         +ConversationSummary(summaryId: String, content: String, preparedAt: LocalDateTime)
-        +getContent() String
-        +getSummaryId() String
-        +getPreparedAt() LocalDateTime
+        +getContent(): String
+        +getSummaryId(): String
+        +getPreparedAt(): LocalDateTime
     }
     class EmailService {
-        -String serviceName
+        -serviceName: String
         +EmailService(serviceName: String)
-        +sendSummary(client: Client, summary: ConversationSummary) boolean
-        +getServiceName() String
+        +sendSummary(client: Client, summary: ConversationSummary): boolean
+        +getServiceName(): String
     }
     class ConsoleEncoding {
         <<utility>>
         -ConsoleEncoding()
-        +configureUtf8() void
+        +configureUtf8(): void$
+    }
+    class AbstractModule {
+        <<Guice>>
+    }
+    class Injector {
+        <<Guice>>
+    }
+    class Connection {
+        <<java.sql>>
     }
 
+    AbstractModule <|-- CallCenterModule
     CallCenterParticipant <|-- Client
     CallCenterParticipant <|-- Operator
     CallCenterParticipant <|-- Supervisor
     ConversationScript <|.. StandardConversationScript
     Operator ..> ConversationScript : uses
-    Call ..> TelephonyService : injected instance
+    Call --> TelephonyService : injected instance
     Call *-- "0..1" CallRecording : owns
-    Call --> RecordingStore : constructor injection
+    Call --> RecordingStore : constructor-injected abstraction
     RecordingStore <|.. SqliteRecordingStore
-    CallCenterModule --> RecordingStore : binds
-    CallCenterModule --> SqliteRecordingStore : binds implementation
-    Main --> CallCenterModule : creates
-    Main --> HtmlReportGenerator : uses
+    CallCenterModule ..> RecordingStore : binds to SqliteRecordingStore
+    CallCenterModule ..> Connection : @Provides @Singleton
+    SqliteRecordingStore --> Connection : constructor injection
+    Main ..> CallCenterModule : creates
+    Main ..> Injector : Guice.createInjector and getInstance
+    Main ..> Call : obtains through Injector
+    Main ..> Client : creates and submits callback request
+    Main ..> Operator : creates and delegates call handling
+    Main ..> Supervisor : creates and requests evaluation
+    Main ..> TelephonyService : creates
+    Main ..> ConversationScript : creates implementation
+    Main ..> StandardConversationScript : instantiates
+    Main ..> EmailService : creates and sends summary
+    Main ..> ConversationSummary : creates
+    Main ..> RecordingStore : obtains through Injector
+    Main ..> HtmlReportGenerator : uses
     Call "1" --> "0..1" QualityEvaluation : stores
     Call "1" --> "0..1" ConversationSummary : stores
-    Client "1" --> "0..*" Call : requests
-    Operator "1" --> "0..*" Call : handles
+    Client ..> Call : requestCallback(..., injectedCall)
+    Operator ..> Call : handleCall(call, script)
+    Supervisor ..> Call : evaluate(recording, call)
     Supervisor ..> CallRecording : listens to
     Supervisor ..> QualityEvaluation : creates
     EmailService ..> Client : delivers to
     EmailService ..> ConversationSummary : sends
 
-    note for CallCenterParticipant "getParticipantId() є final; getDisplayName() визначається спеціалізаціями"
-    note for Client "getDisplayName() перевизначено; requestCallback() перевантажено для двох сигнатур"
-    note for Operator "getDisplayName() перевизначено"
-    note for Supervisor "getDisplayName() перевизначено"
+    note for CallCenterParticipant "getParticipantId() є final; getDisplayName() є abstract"
+    note for Call "П'ятиаргументний конструктор позначений @Inject; callId має @Named(\"callId\")."
+    note for CallCenterModule "AbstractModule: configure() прив'язує RecordingStore до Singleton SqliteRecordingStore; provideConnection() є @Provides та @Singleton."
+    note for SqliteRecordingStore "Конструктор позначений @Inject; Connection надає CallCenterModule."
+    note for Client "requestCallback(String, String, Call) використовує переданий Injector-екземпляр; не створює Call."
     note for TelephonyService "Симуляція телефонії; зовнішніх викликів немає"
-    note for EmailService "Симуляція електронної пошти; успіх лише після підтвердження"
+    note for EmailService "Симуляція електронної пошти; успіх повертається після receiveSummary()"
     note for ConsoleEncoding "Технічна утиліта, не предметна сутність; статично налаштовує UTF-8 для стандартних потоків консолі"
